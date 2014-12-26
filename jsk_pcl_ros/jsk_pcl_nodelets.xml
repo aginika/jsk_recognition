@@ -399,6 +399,12 @@
       jsk_pcl_ros::OrganizePointCloud
     </description>
   </class>
+  <class name="jsk_pcl/SubtractPointCloud" type="jsk_pcl_ros::SubtractPointCloud"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      jsk_pcl_ros::SubtractPointCloud
+    </description>
+  </class>
   <class name="jsk_pcl/PointCloudMoveitFilter"
          type="jsk_pcl_ros::PointCloudMoveitFilter"
          base_class_type="occupancy_map_monitor::OccupancyMapUpdater">
