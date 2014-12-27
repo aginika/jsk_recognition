@@ -29,6 +29,7 @@ class ObjectDetectionTfPublisher():
             orientation_y = rospy.get_param('~checker_board_params/orientation_y', 0)
             orientation_z = rospy.get_param('~checker_board_params/orientation_z', 0)
             orientation_w = rospy.get_param('~checker_board_params/orientation_w', 0)
+            self.frame_id = rospy.get_param("~frame_id", "object")
             rospy.loginfo("objectdetection_tf_publisher load the calibration params :")
             rospy.loginfo("    pos : %f %f %f orientation %f %f %f %f", position_x, position_y, position_z, orientation_x, orientation_y, orientation_z, orientation_w)
 
