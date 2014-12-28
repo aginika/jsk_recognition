@@ -257,6 +257,8 @@ jsk_pcl_nodelet(src/attention_clipper_nodelet.cpp
   "jsk_pcl/AttentionClipper" "attention_clipper")
 jsk_pcl_nodelet(src/roi_clipper_nodelet.cpp
   "jsk_pcl/ROIClipper" "roi_clipper")
+jsk_pcl_nodelet(src/grasp_object_region_growing_nodelet.cpp
+  "jsk_pcl/GraspObjectRegionGrowing" "grasp_object_region_growing")
 add_library(jsk_pcl_ros SHARED ${jsk_pcl_nodelet_sources}
   src/grid_index.cpp src/grid_map.cpp src/grid_line.cpp src/geo_util.cpp
   src/pcl_conversion_util.cpp src/pcl_util.cpp

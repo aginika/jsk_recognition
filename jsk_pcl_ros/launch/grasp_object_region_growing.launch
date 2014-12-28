@@ -1,0 +1,20 @@
+<launch>
+  <arg name="input" default="/openni/depth_registered/points" />
+  <arg name="manager" default="/openni/openni_nodelet_manager" />
+
+  <node pkg="nodelet" type="nodelet" name="region_segment"
+        args="load jsk_pcl/GraspObjectRegionGrowing $(arg manager)"
+        clear_params="true">
+    <remap from="~input" to="$(arg input)" />
+  </node>
+  <node pkg="nodelet" type="nodelet"
+        name="cluster_decomposer"
+        args="load jsk_pcl/ClusterPointIndicesDecomposer $(arg manager)"
+        output="screen" clear_params="true">
+    <remap from="~input" to="$(arg input)" />
+    <remap from="~target" to="/region_segment/output" />
+    <rosparam>
+    </rosparam>
+  </node>
+
+</launch>
