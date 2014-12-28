@@ -62,8 +62,7 @@ namespace jsk_pcl_ros
     if (!pnh_->getParam("search_radius", radius_))
       {
         radius_ = 0.05;
-        ROS_ERROR("You need to set ~search_radius param.");
-        exit(-1);
+        ROS_WARN("Automatically set ~search_radius param as 0.05");
       }
 
     tf_listener_.reset(new tf::TransformListener);
