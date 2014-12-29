@@ -44,13 +44,15 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/region_growing.h>
+#include <dynamic_reconfigure/server.h>
+#include "jsk_pcl_ros/RegionGrowingSegmentationConfig.h"
 
-#include "jsk_pcl_ros/connection_based_nodelet.h"
+#include <jsk_topic_tools/connection_based_nodelet.h>
 #include <tf/transform_broadcaster.h>
 
 namespace jsk_pcl_ros
 {
-  class GraspObjectRegionGrowing : public ConnectionBasedNodelet
+  class GraspObjectRegionGrowing : public jsk_topic_tools::ConnectionBasedNodelet
   {
   public:
   protected:
@@ -61,8 +63,10 @@ namespace jsk_pcl_ros
     int max_size_;
     double smoothness_threshold_;
     double curvature_threshold_;
+    typedef jsk_pcl_ros::RegionGrowingSegmentationConfig Config;
     double radius_;
     boost::shared_ptr<tf::TransformListener> tf_listener_;
+    boost::shared_ptr <dynamic_reconfigure::Server<Config> > srv_;
 
     std::string rarm_hand_;
     std::string larm_hand_;
@@ -70,7 +74,8 @@ namespace jsk_pcl_ros
     virtual void segment(const sensor_msgs::PointCloud2::ConstPtr& msg);
     virtual void subscribe();
     virtual void unsubscribe();
-    virtual pcl::PointXYZ getDummyHandPositionPoint(std::string input_frame, ros::Time stamp, bool right = true);
+    virtual pcl::PointNormal getDummyHandPositionPoint(std::string input_frame, ros::Time stamp, bool right = true);
+    virtual void configCallback (Config &config, uint32_t level);
   private:
     virtual void onInit();
   };

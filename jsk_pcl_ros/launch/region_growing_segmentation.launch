@@ -1,5 +1,5 @@
 <launch>
-  <arg name="INPUT" default="/camera/depth_registered/points" />
+  <arg name="INPUT" default="/openni/depth_registered/points" />
   <node pkg="nodelet" type="nodelet" name="manager"
         args="manager"
         output="screen"/>

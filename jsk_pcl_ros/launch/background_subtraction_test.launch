@@ -1,0 +1,55 @@
+<!-- -*- mode: xml -*- -->
+<launch>
+  <arg name="INPUT" default="/openni/depth_registered/points"/>
+  <arg name="OUTPUT" default="/openni/depth_registered/points_diff"/>
+  <arg name="TARGET" default="/pcl_nodelet/tf_transform_cloud/output_transformed"/>
+  <arg name="DEFAULT_NAMESPACE" default="background_subtraction"/>
+
+  <arg name="create_manager" default="true" />
+  <arg name="manager" default="background_sub_manager" />
+
+  <group ns="pcl_nodelet">
+     <node pkg="nodelet" type="nodelet"
+          name="voxelgrid"
+          args="load pcl/VoxelGrid /openni/openni_nodelet_manager"
+          output="screen" clear_params="true">
+      <remap from="~input" to="$(arg INPUT)" />
+      <rosparam>
+        filter_field_name: y
+        filter_limit_min: 0.0
+        filter_limit_max: 5.0
+        leaf_size: 0.01
+      </rosparam>
+    </node>
+    <node pkg="nodelet" type="nodelet"
+          name="tf_transform_cloud"
+          args="load jsk_pcl/TfTransformCloud /openni/openni_nodelet_manager"
+          output="screen" clear_params="true">
+      <remap from="~input" to="/pcl_nodelet/voxelgrid/output" />
+      <remap from="~output" to="/pcl_nodelet/tf_transform_cloud/output_transformed" />
+      <rosparam>
+        target_frame_id: openni_depth_frame
+      </rosparam>
+    </node>
+  </group>
+
+
+  <group ns="$(arg DEFAULT_NAMESPACE)">
+    <node if="$(arg create_manager)"
+          pkg="nodelet" type="nodelet" name="$(arg manager)"
+          args="manager" output="screen"/>
+
+    <node pkg="nodelet" type="nodelet"
+          name="bg_substract"
+          args="load pcl/SegmentDifferences $(arg manager)"
+          output="log" clear_params="true">
+      <remap from="~input" to="$(arg INPUT)" />
+      <remap from="~target" to="$(arg TARGET)" />
+      <remap from="~output" to="$(arg OUTPUT)" />
+      <rosparam>
+        max_queue_size: 30
+        distance_threshold: 1
+      </rosparam>
+    </node>
+  </group>
+</launch>

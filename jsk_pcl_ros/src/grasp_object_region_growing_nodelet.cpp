@@ -46,7 +46,7 @@ namespace jsk_pcl_ros
 
   void GraspObjectRegionGrowing::onInit()
   {
-    PCLNodelet::onInit();
+    ConnectionBasedNodelet::onInit();
     if (!pnh_->getParam("rarm_hand", rarm_hand_))
       {
         rarm_hand_ = "";
@@ -59,14 +59,40 @@ namespace jsk_pcl_ros
         ROS_ERROR("You need to set ~larm_hand param.");
         exit(-1);
       }
-    if (!pnh_->getParam("search_radius", radius_))
+    if (!pnh_->getParam("candidate_radius", radius_))
       {
         radius_ = 0.05;
         ROS_WARN("Automatically set ~search_radius param as 0.05");
       }
 
+    srv_ = boost::make_shared <dynamic_reconfigure::Server<Config> > (*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
+      boost::bind (&GraspObjectRegionGrowing::configCallback, this, _1, _2);
+    srv_->setCallback (f);
+
     tf_listener_.reset(new tf::TransformListener);
     pub_ = advertise<jsk_pcl_ros::ClusterPointIndices>(*pnh_, "output", 1);
+  }
+
+  void GraspObjectRegionGrowing::configCallback(Config &config, uint32_t level)
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+
+    if (number_of_neighbors_ != config.number_of_neighbors) {
+      number_of_neighbors_ = config.number_of_neighbors;
+    }
+    if (min_size_ != config.min_size) {
+      min_size_ = config.min_size;
+    }
+    if (max_size_ != config.max_size) {
+      max_size_ = config.max_size;
+    }
+    if (smoothness_threshold_ != config.smoothness_threshold) {
+      smoothness_threshold_ = config.smoothness_threshold;
+    }
+    if (curvature_threshold_ != config.curvature_threshold) {
+      curvature_threshold_ = config.curvature_threshold;
+    }
   }
 
   void GraspObjectRegionGrowing::subscribe()
@@ -79,7 +105,7 @@ namespace jsk_pcl_ros
     sub_.shutdown();
   }
 
-  pcl::PointXYZ GraspObjectRegionGrowing::getDummyHandPositionPoint(std::string input_frame, ros::Time stamp, bool right)
+  pcl::PointNormal GraspObjectRegionGrowing::getDummyHandPositionPoint(std::string input_frame, ros::Time stamp, bool right)
   {
     tf::StampedTransform transform;
     if(right)
@@ -87,7 +113,7 @@ namespace jsk_pcl_ros
     else
       tf_listener_->lookupTransform(input_frame, larm_hand_, stamp, transform);
 
-    pcl::PointXYZ point;
+    pcl::PointNormal point;
     tf::Vector3 trans = transform.getOrigin();
     point.x = (float)trans.getX();
     point.y = (float)trans.getY();
@@ -97,51 +123,56 @@ namespace jsk_pcl_ros
 
   void GraspObjectRegionGrowing::segment(const sensor_msgs::PointCloud2::ConstPtr& msg)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    NODELET_INFO("Here");
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloud(new pcl::PointCloud<pcl::PointNormal>);
     pcl::fromROSMsg(*msg, *cloud);
 
+    // std::vector<int> indices;
+    // cloud->is_dense = false;
+    // pcl::removeNaNFromPointCloud(*cloud, *cloud, indices);
+
+
+    NODELET_INFO("Here1");
     //Get Nearest Point From input cloud with radius.
-    pcl::KdTreeFLANN<pcl::PointXYZ> ktree;
+    pcl::KdTreeFLANN<pcl::PointNormal> ktree;
     ktree.setInputCloud (cloud);
+    NODELET_INFO("Here2");
 
     //Right
     std::vector<int> right_idx (1);
     std::vector<float> right_dists (1);
 
-    pcl::PointXYZ point = getDummyHandPositionPoint(msg->header.frame_id, msg->header.stamp, true);
+    pcl::PointNormal point = getDummyHandPositionPoint(msg->header.frame_id, ros::Time(0), true);
     ktree.radiusSearch (point, radius_, right_idx, right_dists);
 
     //Left
     std::vector<int> left_idx (1);
     std::vector<float> left_dists (1);
-    point = getDummyHandPositionPoint(msg->header.frame_id, msg->header.stamp, false);
+    point = getDummyHandPositionPoint(msg->header.frame_id, ros::Time(0), false);
     ktree.radiusSearch (point, radius_, left_idx, left_dists);
 
-
-    pcl::search::Search<pcl::PointXYZ>::Ptr tree = boost::shared_ptr<pcl::search::Search<pcl::PointXYZ> > (new pcl::search::KdTree<pcl::PointXYZ>);
-    pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimator;
-    normal_estimator.setSearchMethod (tree);
-    normal_estimator.setInputCloud (cloud);
-    normal_estimator.setKSearch (50);
-    normal_estimator.compute (*normals);
-
-    pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> reg;
+    pcl::search::Search<pcl::PointNormal>::Ptr tree = boost::shared_ptr<pcl::search::Search<pcl::PointNormal> > (new pcl::search::KdTree<pcl::PointNormal>);
+    pcl::RegionGrowing<pcl::PointNormal, pcl::PointNormal> reg;
     reg.setMinClusterSize (min_size_);
     reg.setMaxClusterSize (max_size_);
     reg.setSearchMethod (tree);
     reg.setNumberOfNeighbours (number_of_neighbors_);
-    reg.setInputCloud (cloud);
-    reg.setInputNormals (normals);
+    reg.setInputCloud (cloud->makeShared());
+    reg.setInputNormals (cloud->makeShared());
     reg.setSmoothnessThreshold (smoothness_threshold_);
     reg.setCurvatureThreshold (curvature_threshold_);
+    NODELET_INFO("Here");
+
+    std::vector <pcl::PointIndices> clusters;
+    reg.extract (clusters);
+
+    NODELET_INFO("Here Done");
 
     //For right
     pcl::PointIndices::Ptr right_inliers (new pcl::PointIndices ());
     for(int i = 0 ; i < right_idx.size(); i++){
       pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-      reg.getSegmentFromPoint(i, *inliers);
+      reg.getSegmentFromPoint(right_idx[i], *inliers);
       right_inliers->indices.insert(right_inliers->indices.end(), inliers->indices.begin(), inliers->indices.end());
     }
     sort(right_inliers->indices.begin(), right_inliers->indices.end());
@@ -150,13 +181,16 @@ namespace jsk_pcl_ros
     //For left
     pcl::PointIndices::Ptr left_inliers (new pcl::PointIndices ());
     for(int i = 0 ; i < left_idx.size(); i++){
+      // NODELET_INFO("LEFT idx: %d / %d", i , (int)left_idx.size());
       pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-      reg.getSegmentFromPoint(i, *inliers);
+      reg.getSegmentFromPoint(left_idx[i], *inliers);
       left_inliers->indices.insert(left_inliers->indices.end(), inliers->indices.begin(), inliers->indices.end());
     }
     sort(left_inliers->indices.begin(), left_inliers->indices.end());
     left_inliers->indices.erase(unique(left_inliers->indices.begin(), left_inliers->indices.end()), left_inliers->indices.end());
+    NODELET_INFO("Total LEFT %d", (int)left_inliers->indices.size());
 
+    NODELET_INFO("Here2");
     jsk_pcl_ros::ClusterPointIndices output;
     output.header = msg->header;
 
@@ -166,8 +200,9 @@ namespace jsk_pcl_ros
     output.cluster_indices.push_back(right_indices);
     PCLIndicesMsg left_indices;
     left_indices.header = msg->header;
-    left_indices.indices = right_inliers->indices;
+    left_indices.indices = left_inliers->indices;
     output.cluster_indices.push_back(left_indices);
+    NODELET_INFO("Here4");
 
     pub_.publish(output);
   }
