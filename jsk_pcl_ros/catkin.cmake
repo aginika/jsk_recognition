@@ -152,7 +152,8 @@ if(NOT $ENV{ROS_DISTRO} STREQUAL "groovy")
   jsk_pcl_nodelet(src/region_growing_segmentation_nodelet.cpp
     "jsk_pcl/RegionGrowingSegmentation" "region_growing_segmentation")
 endif(NOT $ENV{ROS_DISTRO} STREQUAL "groovy")
-
+jsk_pcl_nodelet(src/euclidean_cluster_extraction_nodelet.cpp
+  "jsk_pcl/EuclideanClustering" "euclidean_clustering")
 jsk_pcl_nodelet(src/organized_multi_plane_segmentation_nodelet.cpp
   "jsk_pcl/OrganizedMultiPlaneSegmentation" "organized_multi_plane_segmentation")
 jsk_pcl_nodelet(src/multi_plane_extraction_nodelet.cpp
