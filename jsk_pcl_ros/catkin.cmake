@@ -128,8 +128,6 @@ jsk_pcl_nodelet(src/particle_filter_tracking_nodelet.cpp "jsk_pcl/ParticleFilter
 jsk_pcl_nodelet(src/voxel_grid_downsample_manager_nodelet.cpp "jsk_pcl/VoxelGridDownsampleManager" "voxel_grid_downsample_manager")
 jsk_pcl_nodelet(src/voxel_grid_downsample_decoder_nodelet.cpp "jsk_pcl/VoxelGridDownsampleDecoder" "voxel_grid_downsample_decoder")
 jsk_pcl_nodelet(src/snapit_nodelet.cpp "jsk_pcl/Snapit" "snapit")
-jsk_pcl_nodelet(src/keypoints_publisher_nodelet.cpp "jsk_pcl/KeypointsPublisher" "keypoints_publisher")
-jsk_pcl_nodelet(src/hinted_plane_detector_nodelet.cpp "jsk_pcl/HintedPlaneDetector" "hinted_plane_detector")
 jsk_pcl_nodelet(src/pointcloud_throttle_nodelet.cpp "jsk_pcl/NodeletPointCloudThrottle" "point_cloud_throttle")
 jsk_pcl_nodelet(src/centroid_publisher_nodelet.cpp "jsk_pcl/CentroidPublisher" "centroid_publisher")
 jsk_pcl_nodelet(src/image_throttle_nodelet.cpp
@@ -138,24 +136,12 @@ jsk_pcl_nodelet(src/image_mux_nodelet.cpp
   "jsk_pcl/NodeletImageMUX" "image_mux")
 jsk_pcl_nodelet(src/image_demux_nodelet.cpp
   "jsk_pcl/NodeletImageDEMUX" "image_demux")
-jsk_pcl_nodelet(src/image_rotate_nodelet.cpp
-  "jsk_pcl/ImageRotateNodelet" "image_rotate")
-jsk_pcl_nodelet(src/octree_change_publisher_nodelet.cpp
-  "jsk_pcl/OctreeChangePublisher" "octree_change_publisher")
 jsk_pcl_nodelet(src/tf_transform_cloud_nodelet.cpp
   "jsk_pcl/TfTransformCloud" "tf_transform_cloud")
-jsk_pcl_nodelet(src/color_filter_nodelet.cpp
-  "jsk_pcl/RGBColorFilter" "rgb_color_filter")
-jsk_pcl_nodelet(src/color_filter_nodelet.cpp
-  "jsk_pcl/HSIColorFilter" "hsi_color_filter")
-jsk_pcl_nodelet(src/euclidean_cluster_extraction_nodelet.cpp
-  "jsk_pcl/EuclideanClustering" "euclidean_clustering")
 jsk_pcl_nodelet(src/cluster_point_indices_decomposer_nodelet.cpp
   "jsk_pcl/ClusterPointIndicesDecomposer" "cluster_point_indices_decomposer")
 jsk_pcl_nodelet(src/cluster_point_indices_decomposer_z_axis_nodelet.cpp
   "jsk_pcl/ClusterPointIndicesDecomposerZAxis" "cluster_point_indices_decomposer_z_axis")
-jsk_pcl_nodelet(src/resize_points_publisher_nodelet.cpp
-  "jsk_pcl/ResizePointsPublisher" "resize_points_publisher")
 jsk_pcl_nodelet(src/normal_concatenater_nodelet.cpp
   "jsk_pcl/NormalConcatenater" "normal_concatenater")
 jsk_pcl_nodelet(src/normal_estimation_integral_image_nodelet.cpp
