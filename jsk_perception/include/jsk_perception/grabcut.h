@@ -34,35 +34,57 @@
  *********************************************************************/
 
 
-#ifndef JSK_PCL_ROS_DIAGNOSTIC_NODELET_
-#define JSK_PCL_ROS_DIAGNOSTIC_NODELET_
+#ifndef JSK_PERCEPTION_GRABCUT_H_
+#define JSK_PERCEPTION_GRABCUT_H_
 
-#include <pcl_ros/pcl_nodelet.h>
-#include <diagnostic_updater/diagnostic_updater.h>
-#include <diagnostic_updater/publisher.h>
-#include <jsk_topic_tools/vital_checker.h>
-#include "jsk_pcl_ros/pcl_util.h"
-#include "jsk_pcl_ros/connection_based_nodelet.h"
+#include <sensor_msgs/Image.h>
 
-namespace jsk_pcl_ros
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/synchronizer.h>
+
+#include <jsk_topic_tools/diagnostic_nodelet.h>
+
+namespace jsk_perception
 {
-  class DiagnosticNodelet: public ConnectionBasedNodelet
+  class GrabCut: public jsk_topic_tools::DiagnosticNodelet
   {
   public:
-    typedef boost::shared_ptr<DiagnosticNodelet> Ptr;
-    DiagnosticNodelet(const std::string& name);
+    typedef message_filters::sync_policies::ExactTime<
+    sensor_msgs::Image,
+    sensor_msgs::Image,
+    sensor_msgs::Image> SyncPolicy;
+    
+    typedef boost::shared_ptr<GrabCut> Ptr;
+    GrabCut() : DiagnosticNodelet("GrabCut") {}
 
   protected:
+    ////////////////////////////////////////////////////////
+    // methods
+    ////////////////////////////////////////////////////////
     virtual void onInit();
-    virtual void updateDiagnosticRoot(
-      diagnostic_updater::DiagnosticStatusWrapper &stat);
+    virtual void subscribe();
+    virtual void unsubscribe();
     virtual void updateDiagnostic(
-      diagnostic_updater::DiagnosticStatusWrapper &stat) = 0;
+      diagnostic_updater::DiagnosticStatusWrapper &stat);
+    virtual void segment(
+      const sensor_msgs::Image::ConstPtr& image_msg,
+      const sensor_msgs::Image::ConstPtr& foreground_msg,
+      const sensor_msgs::Image::ConstPtr& background_msg);
 
-    const std::string name_;
-    TimeredDiagnosticUpdater::Ptr diagnostic_updater_;
-    jsk_topic_tools::VitalChecker::Ptr vital_checker_;
-
+    ////////////////////////////////////////////////////////
+    // parameters
+    ////////////////////////////////////////////////////////
+    ros::Publisher pub_foreground_;
+    ros::Publisher pub_background_;
+    ros::Publisher pub_foreground_mask_;
+    ros::Publisher pub_background_mask_;
+    boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> >sync_;
+    message_filters::Subscriber<sensor_msgs::Image> sub_image_;
+    message_filters::Subscriber<sensor_msgs::Image> sub_foreground_;
+    message_filters::Subscriber<sensor_msgs::Image> sub_background_;
+    
+    
   private:
     
   };
