@@ -46,7 +46,7 @@ namespace jsk_pcl_ros
 
   void GraspObjectRegionGrowing::onInit()
   {
-    PCLNodelet::onInit();
+    ConnectionBasedNodelet::onInit();
     if (!pnh_->getParam("rarm_hand", rarm_hand_))
       {
         rarm_hand_ = "";
