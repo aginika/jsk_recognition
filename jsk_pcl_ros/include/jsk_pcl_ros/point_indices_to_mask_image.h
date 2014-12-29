@@ -33,51 +33,50 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include "jsk_pcl_ros/diagnostic_nodelet.h"
+
+#ifndef JSK_PCL_ROS_POINT_INDICES_TO_MASK_IMAGE_H_
+#define JSK_PCL_ROS_POINT_INDICES_TO_MASK_IMAGE_H_
+
+#include <jsk_topic_tools/diagnostic_nodelet.h>
+#include <sensor_msgs/Image.h>
+#include "jsk_pcl_ros/pcl_conversion_util.h"
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/synchronizer.h>
 
 namespace jsk_pcl_ros
 {
-  DiagnosticNodelet::DiagnosticNodelet(const std::string& name):
-    name_(name)
+  class PointIndicesToMaskImage: public jsk_topic_tools::DiagnosticNodelet
   {
-
-  }
+  public:
+    typedef message_filters::sync_policies::ExactTime<
+      PCLIndicesMsg,
+      sensor_msgs::Image > SyncPolicy;
   
-  void DiagnosticNodelet::onInit()
-  {
-    PCLNodelet::onInit();
-    diagnostic_updater_.reset(
-      new TimeredDiagnosticUpdater(*pnh_, ros::Duration(1.0)));
-    diagnostic_updater_->setHardwareID(getName());
-    diagnostic_updater_->add(
-      getName() + "::" + name_,
-      boost::bind(
-        &DiagnosticNodelet::updateDiagnosticRoot,
-        this,
-        _1));
-    double vital_rate;
-    pnh_->param("vital_rate", vital_rate, 1.0);
-    vital_checker_.reset(
-      new jsk_topic_tools::VitalChecker(1 / vital_rate));
-    diagnostic_updater_->start();
-  }
+    PointIndicesToMaskImage(): DiagnosticNodelet("PointIndicesToMaskImage") { }
+  protected:
+    ////////////////////////////////////////////////////////
+    // methods
+    ////////////////////////////////////////////////////////
+    virtual void onInit();
+    virtual void subscribe();
+    virtual void unsubscribe();
+    virtual void updateDiagnostic(
+      diagnostic_updater::DiagnosticStatusWrapper &stat);
+    virtual void mask(
+      const PCLIndicesMsg::ConstPtr& indices_msg,
+      const sensor_msgs::Image::ConstPtr& image_msg);
   
-  void DiagnosticNodelet::updateDiagnosticRoot(
-    diagnostic_updater::DiagnosticStatusWrapper &stat)
-  {
-    if (publishers_.size() > 0) {
-      for (size_t i = 0; i < publishers_.size(); i++) {
-        if (publishers_[i].getNumSubscribers() > 0) {
-          updateDiagnostic(stat);
-          return;
-        }
-      }
-      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, 
-                   "No subscriber");
-    }
-    else {
-      updateDiagnostic(stat);
-    }
-  }
+    ////////////////////////////////////////////////////////
+    // ROS variables
+    ////////////////////////////////////////////////////////
+    boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> >sync_;
+    message_filters::Subscriber<PCLIndicesMsg> sub_input_;
+    message_filters::Subscriber<sensor_msgs::Image> sub_image_;
+    ros::Publisher pub_;
+  private:
   
+  };
 }
+
+#endif

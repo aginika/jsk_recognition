@@ -33,26 +33,40 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include "jsk_pcl_ros/connection_based_nodelet.h"
+
+#ifndef JSK_PCL_ROS_MASK_IMAGE_TO_POINT_INDICES_H_
+#define JSK_PCL_ROS_MASK_IMAGE_TO_POINT_INDICES_H_
+
+#include <jsk_topic_tools/diagnostic_nodelet.h>
+#include <sensor_msgs/Image.h>
+#include "jsk_pcl_ros/pcl_conversion_util.h"
 
 namespace jsk_pcl_ros
 {
-  void ConnectionBasedNodelet::connectionCallback(const ros::SingleSubscriberPublisher& pub)
+  class MaskImageToPointIndices: public jsk_topic_tools::DiagnosticNodelet
   {
-    boost::mutex::scoped_lock lock(connection_mutex_);
-    for (size_t i = 0; i < publishers_.size(); i++) {
-      ros::Publisher pub = publishers_[i];
-      if (pub.getNumSubscribers() > 0) {
-        if (!subscribed_) {
-          subscribe();
-          subscribed_ = true;
-        }
-        return;
-      }
-    }
-    if (subscribed_) {
-      unsubscribe();
-      subscribed_ = false;
-    }
-  }
+  public:
+    MaskImageToPointIndices(): DiagnosticNodelet("MaskImageToPointIndices") { }
+  protected:
+    ////////////////////////////////////////////////////////
+    // methods
+    ////////////////////////////////////////////////////////
+    virtual void onInit();
+    virtual void subscribe();
+    virtual void unsubscribe();
+    virtual void updateDiagnostic(
+      diagnostic_updater::DiagnosticStatusWrapper &stat);
+    virtual void indices(
+      const sensor_msgs::Image::ConstPtr& image_msg);
+  
+    ////////////////////////////////////////////////////////
+    // ROS variables
+    ////////////////////////////////////////////////////////
+    ros::Subscriber sub_;
+    ros::Publisher pub_;
+  private:
+  
+  };
 }
+
+#endif
