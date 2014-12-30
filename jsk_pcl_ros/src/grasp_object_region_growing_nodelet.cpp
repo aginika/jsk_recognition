@@ -111,10 +111,14 @@ namespace jsk_pcl_ros
   pcl::PointNormal GraspObjectRegionGrowing::getDummyHandPositionPoint(std::string input_frame, ros::Time stamp, bool right)
   {
     tf::StampedTransform transform;
-    if(right)
-      tf_listener_->lookupTransform(input_frame, rarm_hand_, stamp, transform);
-    else
-      tf_listener_->lookupTransform(input_frame, larm_hand_, stamp, transform);
+    if(right){
+      tf_listener_->waitForTransform(input_frame, rarm_hand_, ros::Time(0), ros::Duration(10.0) );
+      tf_listener_->lookupTransform(input_frame, rarm_hand_, ros::Time(0), transform);
+    }
+    else{
+      tf_listener_->waitForTransform(input_frame, larm_hand_, ros::Time(0), ros::Duration(10.0) );
+      tf_listener_->lookupTransform(input_frame, larm_hand_, ros::Time(0), transform);
+    }
 
     pcl::PointNormal point;
     tf::Vector3 trans = transform.getOrigin();
@@ -130,16 +134,9 @@ namespace jsk_pcl_ros
     pcl::PointCloud<pcl::PointNormal>::Ptr cloud(new pcl::PointCloud<pcl::PointNormal>);
     pcl::fromROSMsg(*msg, *cloud);
 
-    // std::vector<int> indices;
-    // cloud->is_dense = false;
-    // pcl::removeNaNFromPointCloud(*cloud, *cloud, indices);
-
-
-    NODELET_INFO("Here1");
     //Get Nearest Point From input cloud with radius.
     pcl::KdTreeFLANN<pcl::PointNormal> ktree;
     ktree.setInputCloud (cloud);
-    NODELET_INFO("Here2");
 
     //Right
     std::vector<int> right_idx (1);
@@ -211,7 +208,6 @@ namespace jsk_pcl_ros
     left_inliers->indices.erase(unique(left_inliers->indices.begin(), left_inliers->indices.end()), left_inliers->indices.end());
     NODELET_INFO("Total LEFT %d", (int)left_inliers->indices.size());
 
-    NODELET_INFO("Here2");
     jsk_pcl_ros::ClusterPointIndices output;
     output.header = msg->header;
 
@@ -223,8 +219,6 @@ namespace jsk_pcl_ros
     left_indices.header = msg->header;
     left_indices.indices = left_inliers->indices;
     output.cluster_indices.push_back(left_indices);
-    NODELET_INFO("Here4");
-
     pub_.publish(output);
   }
 }

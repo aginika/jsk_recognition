@@ -3,10 +3,22 @@
   <node pkg="nodelet" type="nodelet" name="manager"
         args="manager"
         output="screen"/>
+  <node pkg="nodelet" type="nodelet"
+	name="voxelgrid"
+	args="load pcl/VoxelGrid manager"
+	output="screen" clear_params="true">
+    <remap from="~input" to="$(arg INPUT)" />
+    <rosparam>
+      filter_field_name: z
+      filter_limit_min: 0.0
+      filter_limit_max: 3.0
+      leaf_size: 0.02
+    </rosparam>
+  </node>
   <node pkg="nodelet" type="nodelet" name="normal_estimate"
         args="load pcl/NormalEstimationOMP manager"
         clear_params="true">
-    <remap from="~input" to="$(arg INPUT)" />
+    <remap from="~input" to="/voxelgrid/output" />
     <!-- <remap from="~output" to="/normal_concat/input" /> -->
     <rosparam>
       radius_search: 0
@@ -18,7 +30,7 @@
   <node pkg="nodelet" type="nodelet" name="normal_concat"
         args="load jsk_pcl/NormalConcatenater manager"
         clear_params="true">
-    <remap from="~input" to="$(arg INPUT)"/>
+    <remap from="~input" to="/voxelgrid/output"/>
     <remap from="~normal" to="/normal_estimate/output"/>
   </node>
   <node pkg="nodelet" type="nodelet" name="remove_nan"
@@ -38,7 +50,7 @@
     <remap from="~input" to="/remove_nan/output" />
     <param name="rarm_hand" value="r_gripper_tool_frame"/>
     <param name="larm_hand" value="l_gripper_tool_frame"/>
-    <param name="candidate_radius" value="0.1"/>
+    <param name="candidate_radius" value="0.15"/>
   </node>
   <node pkg="nodelet" type="nodelet"
         name="cluster_decomposer"
