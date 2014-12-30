@@ -72,6 +72,9 @@ namespace jsk_pcl_ros
 
     tf_listener_.reset(new tf::TransformListener);
     pub_ = advertise<jsk_pcl_ros::ClusterPointIndices>(*pnh_, "output", 1);
+
+    right_pub_ = advertise<sensor_msgs::PointCloud2>(*pnh_, "right_point", 1);
+    left_pub_ = advertise<sensor_msgs::PointCloud2>(*pnh_, "left_point", 1);
   }
 
   void GraspObjectRegionGrowing::configCallback(Config &config, uint32_t level)
@@ -145,11 +148,29 @@ namespace jsk_pcl_ros
     pcl::PointNormal point = getDummyHandPositionPoint(msg->header.frame_id, ros::Time(0), true);
     ktree.radiusSearch (point, radius_, right_idx, right_dists);
 
+    //For debug
+    sensor_msgs::PointCloud2 pcr;
+    pcl::PointCloud<pcl::PointNormal> point_r;
+    point_r.points.push_back(point);
+    pcl::toROSMsg(point_r, pcr);
+    pcr.header.frame_id = msg->header.frame_id;
+    pcr.header.stamp = ros::Time::now();
+    right_pub_.publish(pcr);
+
     //Left
     std::vector<int> left_idx (1);
     std::vector<float> left_dists (1);
     point = getDummyHandPositionPoint(msg->header.frame_id, ros::Time(0), false);
     ktree.radiusSearch (point, radius_, left_idx, left_dists);
+
+    //For debug
+    sensor_msgs::PointCloud2 pcl;
+    pcl::PointCloud<pcl::PointNormal> point_l;
+    point_l.points.push_back(point);
+    pcl::toROSMsg(point_l, pcl);
+    pcl.header.frame_id = msg->header.frame_id;
+    pcl.header.stamp = ros::Time::now();
+    left_pub_.publish(pcl);
 
     pcl::search::Search<pcl::PointNormal>::Ptr tree = boost::shared_ptr<pcl::search::Search<pcl::PointNormal> > (new pcl::search::KdTree<pcl::PointNormal>);
     pcl::RegionGrowing<pcl::PointNormal, pcl::PointNormal> reg;

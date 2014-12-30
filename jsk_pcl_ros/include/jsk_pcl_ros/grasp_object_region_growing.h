@@ -57,6 +57,8 @@ namespace jsk_pcl_ros
   public:
   protected:
     ros::Publisher pub_;
+    ros::Publisher right_pub_;
+    ros::Publisher left_pub_;
     ros::Subscriber sub_;
     int number_of_neighbors_;
     int min_size_;
