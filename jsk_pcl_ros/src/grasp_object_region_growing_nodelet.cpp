@@ -211,14 +211,19 @@ namespace jsk_pcl_ros
     jsk_pcl_ros::ClusterPointIndices output;
     output.header = msg->header;
 
-    PCLIndicesMsg right_indices;
-    right_indices.header = msg->header;
-    right_indices.indices = right_inliers->indices;
-    output.cluster_indices.push_back(right_indices);
-    PCLIndicesMsg left_indices;
-    left_indices.header = msg->header;
-    left_indices.indices = left_inliers->indices;
-    output.cluster_indices.push_back(left_indices);
+    // PCLIndicesMsg right_indices;
+    // right_indices.header = msg->header;
+    // right_indices.indices = right_inliers->indices;
+    // output.cluster_indices.push_back(right_indices);
+    // PCLIndicesMsg left_indices;
+    // left_indices.header = msg->header;
+    // left_indices.indices = left_inliers->indices;
+    // output.cluster_indices.push_back(left_indices);
+    right_inliers->indices.insert(right_inliers->indices.end(), left_inliers->indices.begin(), left_inliers->indices.end());
+    PCLIndicesMsg indices;
+    indices.header = msg->header;
+    indices.indices = right_inliers->indices;
+    output.cluster_indices.push_back(indices);
     pub_.publish(output);
   }
 }

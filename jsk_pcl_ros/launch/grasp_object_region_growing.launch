@@ -4,9 +4,9 @@
         args="manager"
         output="screen"/>
   <node pkg="nodelet" type="nodelet"
-	name="voxelgrid"
-	args="load pcl/VoxelGrid $(arg manager)"
-	output="screen" clear_params="true">
+        name="voxelgrid"
+        args="load pcl/VoxelGrid $(arg manager)"
+        output="screen" clear_params="true">
     <remap from="~input" to="$(arg INPUT)" />
     <rosparam>
       filter_field_name: z
