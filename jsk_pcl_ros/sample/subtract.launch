@@ -1,0 +1,17 @@
+<launch>
+  <arg name="manager" default="/openni/openni_nodelet_manager" />
+  <arg name="input_point" default="/openni/depth_registered/points" />
+
+  <group ns="pcl_nodelet">
+    <node pkg="nodelet" type="nodelet"
+	  name="subtract"
+          args="load jsk_pcl/SubtractPointCloud $(arg manager)"
+          output="screen" clear_params="true">
+      <remap from="~input" to="$(arg input_point)" />
+      <remap from="~mask" to="/selected_pointcloud" />
+      <rosparam>
+        search_radius: 0.01
+      </rosparam>
+    </node>
+  </group>
+</launch>
