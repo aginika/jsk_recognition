@@ -43,170 +43,147 @@
 
 namespace jsk_pcl_ros
 {
-  bool EstimateBoundingBox::computeBoundingBox
-  (const pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmented_cloud,
-   const std_msgs::Header header,
-   const Eigen::Vector4f center,
-   const jsk_recognition_msgs::PolygonArrayConstPtr& planes,
-   const jsk_recognition_msgs::ModelCoefficientsArrayConstPtr& coefficients,
-   jsk_recognition_msgs::BoundingBox& bounding_box)
+  void EstimateBoundingBox::extract(const sensor_msgs::PointCloud2ConstPtr &input_cloud
+                                    ,const PCLIndicesMsg::ConstPtr &input_indices)
   {
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr
-      segmented_cloud_transformed (new pcl::PointCloud<pcl::PointXYZRGB>);
-    // align boxes if possible
-    Eigen::Matrix4f m4 = Eigen::Matrix4f::Identity();
-    Eigen::Quaternionf q = Eigen::Quaternionf::Identity();
-    if (align_boxes_) {
-      int nearest_plane_index = findNearestPlane(center, planes, coefficients);
-      if (nearest_plane_index == -1) {
-        segmented_cloud_transformed = segmented_cloud;
-        JSK_NODELET_ERROR("no planes to align boxes are given");
-      }
-      else {
-        Eigen::Vector3f normal, z_axis;
-        if (force_to_flip_z_axis_) {
-          normal[0] = - coefficients->coefficients[nearest_plane_index].values[0];
-          normal[1] = - coefficients->coefficients[nearest_plane_index].values[1];
-          normal[2] = - coefficients->coefficients[nearest_plane_index].values[2];
-        }
-        else {
-          normal[0] = coefficients->coefficients[nearest_plane_index].values[0];
-          normal[1] = coefficients->coefficients[nearest_plane_index].values[1];
-          normal[2] = coefficients->coefficients[nearest_plane_index].values[2];
-        }
-        normal = normal.normalized();
-        Eigen::Quaternionf rot;
-        rot.setFromTwoVectors(Eigen::Vector3f::UnitZ(), normal);
-        Eigen::AngleAxisf rotation_angle_axis(rot);
-        Eigen::Vector3f rotation_axis = rotation_angle_axis.axis();
-        double theta = rotation_angle_axis.angle();
-        if (isnan(theta) ||
-            isnan(rotation_axis[0]) ||
-            isnan(rotation_axis[1]) ||
-            isnan(rotation_axis[2])) {
-          segmented_cloud_transformed = segmented_cloud;
-          JSK_NODELET_ERROR("cannot compute angle to align the point cloud: [%f, %f, %f], [%f, %f, %f]",
-                            z_axis[0], z_axis[1], z_axis[2],
-                            normal[0], normal[1], normal[2]);
-        }
-        else {
-          Eigen::Matrix3f m = Eigen::Matrix3f::Identity() * rot;
-          if (use_pca_) {
-            // first project points to the plane
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr projected_cloud
-              (new pcl::PointCloud<pcl::PointXYZRGB>);
-            pcl::ProjectInliers<pcl::PointXYZRGB> proj;
-            proj.setModelType (pcl::SACMODEL_PLANE);
-            pcl::ModelCoefficients::Ptr
-              plane_coefficients (new pcl::ModelCoefficients);
-            plane_coefficients->values
-              = coefficients->coefficients[nearest_plane_index].values;
-            proj.setModelCoefficients(plane_coefficients);
-            proj.setInputCloud(segmented_cloud);
-            proj.filter(*projected_cloud);
-            if (projected_cloud->points.size() >= 3) {
-              pcl::PCA<pcl::PointXYZRGB> pca;
-              pca.setInputCloud(projected_cloud);
-              Eigen::Matrix3f eigen = pca.getEigenVectors();
-              m.col(0) = eigen.col(0);
-              m.col(1) = eigen.col(1);
-              // flip axis to satisfy right-handed system
-              if (m.col(0).cross(m.col(1)).dot(m.col(2)) < 0) {
-                m.col(0) = - m.col(0);
-              }
-              if (m.col(0).dot(Eigen::Vector3f::UnitX()) < 0) {
-                // rotate around z
-                m = m * Eigen::AngleAxisf(M_PI, Eigen::Vector3f::UnitZ());
-              }
-            }
-            else {
-              JSK_NODELET_ERROR("Too small indices for PCA computation");
-              return false;
-            }
-          }
-          // m4 <- m
-          for (size_t row = 0; row < 3; row++) {
-            for (size_t column = 0; column < 3; column++) {
-              m4(row, column) = m(row, column);
-            }
-          }
-          q = m;
-          Eigen::Matrix4f inv_m = m4.inverse();
-          pcl::transformPointCloud(*segmented_cloud, *segmented_cloud_transformed, inv_m);
-        }
-      }
-    }
-    else {
-      segmented_cloud_transformed = segmented_cloud;
-    }
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromROSMsg(*input_cloud, *cloud);
+    // pcl::fromROSMsg(*input, *cloud_xyz);
+    // cluster_counter_.add(indices_input->cluster_indices.size());
 
-    // create a bounding box
-    Eigen::Vector4f minpt, maxpt;
-    pcl::getMinMax3D<pcl::PointXYZRGB>(*segmented_cloud_transformed, minpt, maxpt);
+    jsk_recognition_msgs::PolygonArrayPtr planes(new jsk_recognition_msgs::PolygonArray());
+    jsk_recognition_msgs::ModelCoefficientsArrayPtr coefficients(new jsk_recognition_msgs::ModelCoefficientsArray());
 
-    double xwidth = maxpt[0] - minpt[0];
-    double ywidth = maxpt[1] - minpt[1];
-    double zwidth = maxpt[2] - minpt[2];
-    Eigen::Vector4f center2((maxpt[0] + minpt[0]) / 2.0, (maxpt[1] + minpt[1]) / 2.0, (maxpt[2] + minpt[2]) / 2.0, 1.0);
-    Eigen::Vector4f center_transformed = m4 * center2;
-    bounding_box.header = header;
-    bounding_box.pose.position.x = center_transformed[0];
-    bounding_box.pose.position.y = center_transformed[1];
-    bounding_box.pose.position.z = center_transformed[2];
-    bounding_box.pose.orientation.x = q.x();
-    bounding_box.pose.orientation.y = q.y();
-    bounding_box.pose.orientation.z = q.z();
-    bounding_box.pose.orientation.w = q.w();
-    bounding_box.dimensions.x = xwidth;
-    bounding_box.dimensions.y = ywidth;
-    bounding_box.dimensions.z = zwidth;
-    return true;
-  }
+    pcl::IndicesPtr vindices;
+    vindices.reset (new std::vector<int> (input_indices->indices));
 
-  void EstimateBoundingBox::extract(const pcl_msgs::PointIndicesPtr& input)
-  {
     pcl::ExtractIndices<pcl::PointXYZRGB> extract;
-    extract.setInputCloud (cloud_filtered);
-    extract.setIndices (inliers);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmented_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    extract.setInputCloud (cloud);
+    extract.setIndices (vindices);
     extract.setNegative (false);
-    extract.filter (*cloud_p);
+    extract.filter (*segmented_cloud);
 
-    if(calc_bbox){
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
+    tree->setInputCloud (segmented_cloud);
+
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
+    ec.setClusterTolerance (0.02);
+    ec.setMinClusterSize (50);
+    ec.setMaxClusterSize (25000);
+    ec.setSearchMethod (tree);
+    ec.setInputCloud (segmented_cloud);
+    ec.extract (cluster_indices);
+
+    if(calc_bbox_){
+      if(cluster_indices.size() == 1){        
+    ROS_ERROR("HERE8");
       jsk_recognition_msgs::BoundingBox bounding_box;
-      bool successp = computeBoundingBox(segmented_cloud, input->header, center, planes, coefficients, bounding_box);
-      box_pub_.publish(bounding_box);
-    }
+      Eigen::Vector4f center;
+        pcl::compute3DCentroid(*segmented_cloud, center);
 
+        bool successp = computeBoundingBox(segmented_cloud, input_cloud->header, center, planes, coefficients, bounding_box);
+        jsk_recognition_msgs::BoundingBoxArray bbox_array;
+        bbox_array.header.frame_id = input_cloud->header.frame_id;
+        bbox_array.header.stamp = input_cloud->header.stamp;
+        bbox_array.boxes.push_back(bounding_box);
+        
+	box_array_pub_.publish(bbox_array);
 
-    if(calc_centroid){
-      pcl::compute3DCentroid(cloud_xyz, center);
-      if (publish_tf_) {
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(center[0], center[1], center[2]));
-        transform.setRotation(tf::createIdentityQuaternion());
-        br_.sendTransform(tf::StampedTransform(transform, input->header.stamp,
-                                               input->header.frame_id, frame_));
+        if (publish_tf_) {
+          tf::Transform transform;
+          transform.setOrigin(tf::Vector3(center[0], center[1], center[2]));
+          transform.setRotation(tf::createIdentityQuaternion());
+          br_.sendTransform(tf::StampedTransform(transform, input_cloud->header.stamp,
+                                                 input_cloud->header.frame_id, frame_));
+        }
+        geometry_msgs::PoseStamped pose;
+        pose.pose.orientation.w = 1.0;
+        pose.pose.position.x = center[0];
+        pose.pose.position.y = center[1];
+        pose.pose.position.z = center[2];
+        pose.header = input_cloud->header;
+	//        pub_pose_.publish(pose);
+        geometry_msgs::PointStamped point;
+        point.point.x = center[0];
+        point.point.y = center[1];
+        point.point.z = center[2];
+        point.header = input_cloud->header;
+	//        pub_point_.publish(point);
+      }else if(cluster_indices.size() > 1){
+        jsk_recognition_msgs::BoundingBoxArray bbox_array;
+        for(std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
+          jsk_recognition_msgs::BoundingBox bounding_box;
+          Eigen::Vector4f center;
+	  pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+	  pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmented_cloud2 (new pcl::PointCloud<pcl::PointXYZRGB>);
+	  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+	  inliers->indices = it->indices;
+
+	  extract.setInputCloud (segmented_cloud);
+	  extract.setIndices (inliers);
+	  extract.setNegative (false);
+	  extract.filter (*segmented_cloud2);
+          
+          bool successp = computeBoundingBox(segmented_cloud2, input_cloud->header, center, planes, coefficients, bounding_box);
+          bbox_array.boxes.push_back(bounding_box);
+        }
+	if(bbox_array.boxes.size()){
+	  bbox_array.header.frame_id = input_cloud->header.frame_id;
+	  bbox_array.header.stamp = input_cloud->header.stamp;
+	  box_array_pub_.publish(bbox_array);
+	}
       }
-      geometry_msgs::PoseStamped pose;
-      pose.pose.orientation.w = 1.0;
-      pose.pose.position.x = center[0];
-      pose.pose.position.y = center[1];
-      pose.pose.position.z = center[2];
-      pose.header = input->header;
-      pub_pose_.publish(pose);
-      geometry_msgs::PointStamped point;
-      point.point.x = center[0];
-      point.point.y = center[1];
-      point.point.z = center[2];
-      point.header = input->header;
-      pub_point_.publish(point);
     }
+    else{
+      if(calc_centroid_){
+      Eigen::Vector4f center;
+        pcl::compute3DCentroid(*segmented_cloud, center);
+        if (publish_tf_) {
+          tf::Transform transform;
+          transform.setOrigin(tf::Vector3(center[0], center[1], center[2]));
+          transform.setRotation(tf::createIdentityQuaternion());
+          br_.sendTransform(tf::StampedTransform(transform, input_cloud->header.stamp,
+                                                 input_cloud->header.frame_id, frame_));
+        }
+        geometry_msgs::PoseStamped pose;
+        pose.pose.orientation.w = 1.0;
+        pose.pose.position.x = center[0];
+        pose.pose.position.y = center[1];
+        pose.pose.position.z = center[2];
+        pose.header = input_cloud->header;
+	//        pub_pose_.publish(pose);
+        geometry_msgs::PointStamped point;
+        point.point.x = center[0];
+        point.point.y = center[1];
+        point.point.z = center[2];
+        point.header = input_cloud->header;
+	//        pub_point_.publish(point);
+      }
+    }
+    if (publish_extract_){
+      sensor_msgs::PointCloud2 debug_ros_output;
+      pcl::toROSMsg(*segmented_cloud, debug_ros_output);
+      debug_ros_output.header = input_cloud->header;
+      debug_ros_output.is_dense = false;
+      pub_extract_.publish(debug_ros_output);
+    }
+    ROS_ERROR("HEREEND");
 
   }
 
   void EstimateBoundingBox::subscribe()
   {
-    sub_input_ = pnh_->subscribe("input", 1, &EstimateBoundingBox::extract, this);
+    sub_input_points_.subscribe(*pnh_, "points", 1);
+    sub_input_indices_.subscribe(*pnh_, "indices", 1);
+
+    async_ = boost::make_shared<message_filters::Synchronizer<ASyncPolicy> >(100);
+    async_->connectInput(sub_input_points_, sub_input_indices_);
+    async_->registerCallback(boost::bind(&EstimateBoundingBox::extract,
+                                         this, _1, _2));
+
   }
 
   void EstimateBoundingBox::unsubscribe()
@@ -218,20 +195,18 @@ namespace jsk_pcl_ros
   {
     DiagnosticNodelet::onInit();
     pnh_->param("publish_tf", publish_tf_, false);
-    if (calc_bbox)
-      box_pub_ = advertise<jsk_recognition_msgs::BoundingBox>(*pnh_, "box", 1);
+    pnh_->param("publish_extract", publish_extract_, true);
+    pnh_->param("calc_bbox", calc_bbox_, true);
+    pnh_->param("calc_centroid", calc_centroid_, false);
+    pnh_->param("force_to_flip_z_axis", force_to_flip_z_axis_, false);
+    box_array_pub_ = pnh_->advertise<jsk_recognition_msgs::BoundingBoxArray>("box_array", 1);
 
-    if (publish_tf_ && calc_centroid) {
-      if (!pnh_->getParam("frame", frame_))
-        {
-          JSK_ROS_WARN("~frame is not specified, using %s", getName().c_str());
-          frame_ = getName();
-        }
-      pub_pose_ = pnh_->advertise<geometry_msgs::PoseStamped>("output/pose", 1);
-      pub_point_ = pnh_->advertise<geometry_msgs::PointStamped>("output/point", 1);
-      subscribe();
-    }
+    pub_pose_ = pnh_->advertise<geometry_msgs::PoseStamped>("output/pose", 1);
+    pub_point_ = pnh_->advertise<geometry_msgs::PointStamped>("output/point", 1);
+    pub_extract_ = pnh_->advertise<sensor_msgs::PointCloud2>("output/extract_points", 1);
+    subscribe();
   }
+
 }
 
 #include <pluginlib/class_list_macros.h>

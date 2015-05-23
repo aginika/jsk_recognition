@@ -174,7 +174,7 @@ namespace jsk_pcl_ros
     // align boxes if possible
     Eigen::Matrix4f m4 = Eigen::Matrix4f::Identity();
     Eigen::Quaternionf q = Eigen::Quaternionf::Identity();
-    if (align_boxes_) {
+    if (false) {
       int nearest_plane_index = findNearestPlane(center, planes, coefficients);
       if (nearest_plane_index == -1) {
         segmented_cloud_transformed = segmented_cloud;
