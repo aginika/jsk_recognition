@@ -57,6 +57,10 @@ namespace jsk_pcl_ros
 
     pcl::IndicesPtr vindices;
     vindices.reset (new std::vector<int> (input_indices->indices));
+    std::vector<int> indices_nana;
+    cloud->is_dense = false;
+    pcl::removeNaNFromPointCloud(
+      *cloud, *cloud, indices_nana);
 
     pcl::ExtractIndices<pcl::PointXYZRGB> extract;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmented_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -64,6 +68,9 @@ namespace jsk_pcl_ros
     extract.setIndices (vindices);
     extract.setNegative (false);
     extract.filter (*segmented_cloud);
+    segmented_cloud->is_dense = false;
+    pcl::removeNaNFromPointCloud(
+      *segmented_cloud, *segmented_cloud, indices_nana);
 
     pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
     tree->setInputCloud (segmented_cloud);
@@ -79,7 +86,6 @@ namespace jsk_pcl_ros
 
     if(calc_bbox_){
       if(cluster_indices.size() == 1){        
-    ROS_ERROR("HERE8");
       jsk_recognition_msgs::BoundingBox bounding_box;
       Eigen::Vector4f center;
         pcl::compute3DCentroid(*segmented_cloud, center);
@@ -113,6 +119,7 @@ namespace jsk_pcl_ros
         point.header = input_cloud->header;
 	//        pub_point_.publish(point);
       }else if(cluster_indices.size() > 1){
+
         jsk_recognition_msgs::BoundingBoxArray bbox_array;
         for(std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it){
           jsk_recognition_msgs::BoundingBox bounding_box;
@@ -135,6 +142,7 @@ namespace jsk_pcl_ros
 	  bbox_array.header.stamp = input_cloud->header.stamp;
 	  box_array_pub_.publish(bbox_array);
 	}
+
       }
     }
     else{
@@ -170,7 +178,6 @@ namespace jsk_pcl_ros
       debug_ros_output.is_dense = false;
       pub_extract_.publish(debug_ros_output);
     }
-    ROS_ERROR("HEREEND");
 
   }
 
