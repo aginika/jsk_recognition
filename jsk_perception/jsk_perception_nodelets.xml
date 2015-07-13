@@ -176,6 +176,12 @@
       Nodelet to convert fisheye image to panorama.
     </description>
   </class>
+  <class name="jsk_perception/FlowToMaskImage" type="jsk_perception::FlowToMaskImage"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Nodelet to convert flow to Mask Image.
+    </description>
+  </class>
   <class name="jsk_perception/Skeletonization" type="jsk_perception::Skeletonization"
          base_class_type="nodelet::Nodelet">
     <description>
