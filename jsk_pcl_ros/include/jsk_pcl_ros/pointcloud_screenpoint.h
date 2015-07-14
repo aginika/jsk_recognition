@@ -49,9 +49,10 @@
 
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/PolygonStamped.h>
+#include <opencv_apps/FlowArrayStamped.h>
 
 #include "jsk_pcl_ros/TransformScreenpoint.h"
-
+#include <jsk_recognition_msgs/Flow3DArrayStamped.h>
 #include <boost/thread/mutex.hpp>
 
 // F/K/A <ray ocnverter>
@@ -71,6 +72,10 @@ namespace jsk_pcl_ros
       sensor_msgs::PointCloud2,
       sensor_msgs::PointCloud2 > PointCloudApproxSyncPolicy;
 
+    typedef message_filters::sync_policies::ApproximateTime<
+      sensor_msgs::PointCloud2,
+      opencv_apps::FlowArrayStamped > FlowApproxSyncPolicy;
+
 
   private:
     message_filters::Subscriber < sensor_msgs::PointCloud2 > points_sub_;
@@ -78,20 +83,23 @@ namespace jsk_pcl_ros
     message_filters::Subscriber < geometry_msgs::PointStamped > point_sub_;
     message_filters::Subscriber < sensor_msgs::PointCloud2 > point_array_sub_;
     message_filters::Subscriber < geometry_msgs::PolygonStamped > poly_sub_;
+    message_filters::Subscriber < opencv_apps::FlowArrayStamped > flow_sub_;
 
     boost::shared_ptr < message_filters::Synchronizer < PolygonApproxSyncPolicy > > sync_a_rect_;
     boost::shared_ptr < message_filters::Synchronizer < PointApproxSyncPolicy > > sync_a_point_;
     boost::shared_ptr < message_filters::Synchronizer < PointCloudApproxSyncPolicy > > sync_a_point_array_;
     boost::shared_ptr < message_filters::Synchronizer < PolygonApproxSyncPolicy > > sync_a_poly_;
+    boost::shared_ptr < message_filters::Synchronizer < FlowApproxSyncPolicy > > sync_flow_;
 
     ros::Publisher pub_points_;
     ros::Publisher pub_point_;
     ros::Publisher pub_polygon_;
+    ros::Publisher pub_flow3d_;
     ros::ServiceServer srv_;
     pcl::PointCloud<pcl::PointXYZ> pts_;
     std_msgs::Header header_;
 
-    bool use_rect_, use_point_, use_sync_, use_point_array_, use_poly_;
+    bool use_rect_, use_point_, use_sync_, use_point_array_, use_poly_, use_flow_;
     
     pcl::NormalEstimation< pcl::PointXYZ, pcl::Normal > n3d_;
 #if ( PCL_MAJOR_VERSION >= 1 && PCL_MINOR_VERSION >= 5 )
@@ -124,6 +132,8 @@ namespace jsk_pcl_ros
     void poly_cb(const geometry_msgs::PolygonStampedConstPtr& array_ptr);
     void callback_poly(const sensor_msgs::PointCloud2ConstPtr& points_ptr,
                        const geometry_msgs::PolygonStampedConstPtr& array_ptr);
+    void callback_flow(const sensor_msgs::PointCloud2ConstPtr& points_ptr,
+                       const opencv_apps::FlowArrayStampedConstPtr& flow_array_ptr);
     boost::mutex mutex_callback_;
 
     int k_;
@@ -131,7 +141,7 @@ namespace jsk_pcl_ros
     int crop_size_;
     bool publish_point_;
     bool publish_points_;
-
+    bool publish_flow3d_;
   public:
   };
 }
