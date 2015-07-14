@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -36,7 +36,7 @@
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
 #include <geometry_msgs/PolygonStamped.h>
-#include <jsk_pcl_ros/ColorHistogram.h>
+#include <jsk_recognition_msgs/ColorHistogram.h>
 #include <sensor_msgs/image_encodings.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
@@ -91,7 +91,7 @@ namespace jsk_perception
     virtual void convertHistogramToMsg(
       const cv::Mat& hist,
       int size,
-      jsk_pcl_ros::ColorHistogram& msg);
+      jsk_recognition_msgs::ColorHistogram& msg);
     virtual void processBGR(const cv::Mat& bgr_image,
                             const std_msgs::Header& header);
     virtual void processHSI(const cv::Mat& bgr_image,

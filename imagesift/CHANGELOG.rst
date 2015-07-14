@@ -2,6 +2,85 @@
 Changelog for package imagesift
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.13 (2015-06-11)
+-------------------
+* [imagesift] Add header file of imagesift
+* [imagesift] Add Feature0D as output
+* Contributors: Kentaro Wada
+
+0.2.12 (2015-05-04)
+-------------------
+
+0.2.11 (2015-04-13)
+-------------------
+
+0.2.10 (2015-04-09)
+-------------------
+
+0.2.9 (2015-03-29)
+------------------
+* 0.2.8
+* Update Changelog
+* Contributors: Ryohei Ueda
+
+0.2.8 (2015-03-29)
+------------------
+
+0.2.7 (2015-03-26)
+------------------
+
+0.2.6 (2015-03-25)
+------------------
+
+0.2.5 (2015-03-17)
+------------------
+
+0.2.4 (2015-03-08)
+------------------
+
+0.2.3 (2015-02-02)
+------------------
+* Remove rosbuild files
+* Contributors: Ryohei Ueda
+
+0.2.2 (2015-01-30)
+------------------
+
+0.2.1 (2015-01-30)
+------------------
+
+0.2.0 (2015-01-29)
+------------------
+
+0.1.34 (2015-01-29)
+-------------------
+* [imagesift] Refactor codes:
+  * uniformed variable naming convention
+  * uniformed function naming convention
+  * soft tabs
+  * no space in if parens
+* [imagesift] Better support of masking image:
+  1) Use jsk_perception::boundingRectOfMaskImage to compute ROI
+  2) support mask image in imagesift.cpp to make better performance
+* Contributors: Ryohei Ueda
+
+0.1.33 (2015-01-24)
+-------------------
+* speed up image sift
+* [imagesift] Support mask image in imagefeatures.cpp.in
+* Contributors: Ryohei Ueda, Hitoshi Kamada
+
+0.1.32 (2015-01-12)
+-------------------
+
+0.1.31 (2015-01-08)
+-------------------
+* [imagesift] Add warning message if size of mask and image are different
+* [imagesift] support mask image
+* [imagesift] Add warning message if size of mask and image are different
+* [imagesift] support mask image
+* [imagesift] Fix order of subscription and advertisation
+
 0.1.30 (2014-12-24)
 -------------------
 

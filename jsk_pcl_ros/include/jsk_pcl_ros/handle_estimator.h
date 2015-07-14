@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -44,8 +44,8 @@
 
 #include "jsk_pcl_ros/tf_listener_singleton.h"
 
-#include <jsk_pcl_ros/BoundingBox.h>
-#include "jsk_pcl_ros/Int32Stamped.h"
+#include <jsk_recognition_msgs/BoundingBox.h>
+#include "jsk_recognition_msgs/Int32Stamped.h"
 #include <geometry_msgs/PoseArray.h>
 
 #include <boost/circular_buffer.hpp>
@@ -59,7 +59,7 @@ namespace jsk_pcl_ros
   {
   public:
     typedef message_filters::sync_policies::ExactTime< sensor_msgs::PointCloud2,
-                                                       jsk_pcl_ros::BoundingBox > SyncPolicy;
+                                                       jsk_recognition_msgs::BoundingBox > SyncPolicy;
     enum HandleType
     {
       NO_HANDLE,
@@ -71,19 +71,19 @@ namespace jsk_pcl_ros
   protected:
     virtual void onInit();
     virtual void estimate(const sensor_msgs::PointCloud2::ConstPtr& cloud_msg,
-                          const jsk_pcl_ros::BoundingBox::ConstPtr& box_msg);
+                          const jsk_recognition_msgs::BoundingBox::ConstPtr& box_msg);
     virtual void estimateHandle(const HandleType& handle_type,
                                 const sensor_msgs::PointCloud2::ConstPtr& cloud_msg,
-                                const jsk_pcl_ros::BoundingBox::ConstPtr& box_msg);
+                                const jsk_recognition_msgs::BoundingBox::ConstPtr& box_msg);
     virtual void handleSmallEnoughLieOnPlane(
       const sensor_msgs::PointCloud2::ConstPtr& cloud_msg,
-      const jsk_pcl_ros::BoundingBox::ConstPtr& box_msg,
+      const jsk_recognition_msgs::BoundingBox::ConstPtr& box_msg,
       bool y_longest);
     virtual void handleSmallEnoughStandOnPlane(
       const sensor_msgs::PointCloud2::ConstPtr& cloud_msg,
-      const jsk_pcl_ros::BoundingBox::ConstPtr& box_msg);
+      const jsk_recognition_msgs::BoundingBox::ConstPtr& box_msg);
 
-    virtual void selectedIndexCallback( const jsk_pcl_ros::Int32StampedConstPtr &index);
+    virtual void selectedIndexCallback( const jsk_recognition_msgs::Int32StampedConstPtr &index);
 
     virtual void subscribe();
     virtual void unsubscribe();
@@ -92,7 +92,7 @@ namespace jsk_pcl_ros
     ros::Subscriber sub_index_;
     boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> >sync_;
     message_filters::Subscriber<sensor_msgs::PointCloud2> sub_input_;
-    message_filters::Subscriber<jsk_pcl_ros::BoundingBox> sub_box_;
+    message_filters::Subscriber<jsk_recognition_msgs::BoundingBox> sub_box_;
     tf::TransformListener* tf_listener_;
     double gripper_size_;
     double approach_offset_;

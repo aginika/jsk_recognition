@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -82,13 +82,13 @@ namespace jsk_pcl_ros
     }
     
     // Publish result indices
-    jsk_pcl_ros::ClusterPointIndices result;
+    jsk_recognition_msgs::ClusterPointIndices result;
     result.cluster_indices.resize(cluster_indices.size());
     cluster_counter_.add(cluster_indices.size());
     result.header = input->header;
     if (cogs_.size() != 0 && cogs_.size() == cluster_indices.size()) {
       // tracking the labels
-      //ROS_INFO("computing distance matrix");
+      //JSK_ROS_INFO("computing distance matrix");
       // compute distance matrix
       // D[i][j] --> distance between the i-th previous cluster
       //             and the current j-th cluster
@@ -119,7 +119,7 @@ namespace jsk_pcl_ros
 
     result_pub_.publish(result);
     
-    jsk_pcl_ros::Int32Stamped::Ptr cluster_num_msg (new jsk_pcl_ros::Int32Stamped);
+    jsk_recognition_msgs::Int32Stamped::Ptr cluster_num_msg (new jsk_recognition_msgs::Int32Stamped);
     cluster_num_msg->header = input->header;
     cluster_num_msg->data = cluster_indices.size();
     cluster_num_pub_.publish(cluster_num_msg);
@@ -215,8 +215,8 @@ namespace jsk_pcl_ros
     ////////////////////////////////////////////////////////
     // Publisher
     ////////////////////////////////////////////////////////
-    result_pub_ = advertise<jsk_pcl_ros::ClusterPointIndices> (*pnh_, "output", 1);
-    cluster_num_pub_ = advertise<jsk_pcl_ros::Int32Stamped> (*pnh_, "cluster_num", 1);
+    result_pub_ = advertise<jsk_recognition_msgs::ClusterPointIndices> (*pnh_, "output", 1);
+    cluster_num_pub_ = advertise<jsk_recognition_msgs::Int32Stamped> (*pnh_, "cluster_num", 1);
     service_ = pnh_->advertiseService(pnh_->resolveName("euclidean_clustering"),
                                       &EuclideanClustering::serviceCallback, this);
   }
@@ -298,7 +298,7 @@ namespace jsk_pcl_ros
         for (size_t j = 0; j < new_cogs.size(); j++)
         {
           double distance = D[i * cogs.size() + j];
-          //ROS_INFO("distance %lux%lu: %f", i, j, distance);
+          //JSK_ROS_INFO("distance %lux%lu: %f", i, j, distance);
           if (distance < minimum_distance)
           {
             minimum_distance = distance;
@@ -309,7 +309,7 @@ namespace jsk_pcl_ros
       }
       if (minimum_distance > label_tracking_tolerance)
       {
-        // ROS_WARN("minimum tracking distance exceeds tolerance: %f > %f",
+        // JSK_ROS_WARN("minimum tracking distance exceeds tolerance: %f > %f",
         //          minimum_distance, label_tracking_tolerance);
         std::vector<int> dummy;
         return dummy;

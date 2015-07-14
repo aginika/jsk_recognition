@@ -2,6 +2,86 @@
 Changelog for package checkerboard_detector
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.13 (2015-06-11)
+-------------------
+* [checkerboard_detector] Add message_throttle parameter
+* [checkerboard_detector] Description in package.xml valid html.
+* Contributors: Isaac IY Saito, Ryohei Ueda
+
+0.2.12 (2015-05-04)
+-------------------
+
+0.2.11 (2015-04-13)
+-------------------
+
+0.2.10 (2015-04-09)
+-------------------
+* [checkerboard_detector/capture.launch] remove bags in launch
+* Contributors: Yu Ohara
+
+0.2.9 (2015-03-29)
+------------------
+* 0.2.8
+* Update Changelog
+* Contributors: Ryohei Ueda
+
+0.2.8 (2015-03-29)
+------------------
+
+0.2.7 (2015-03-26)
+------------------
+
+0.2.6 (2015-03-25)
+------------------
+* [checkerboard_detector] Fill D of camera parameter by zero if ~use_P is true
+* Contributors: Ryohei Ueda
+
+0.2.5 (2015-03-17)
+------------------
+* [checkerboard_detector] add ~use_P to use P instead of K as intrinsic
+  parameter for illegal camera info such as multisense
+* Contributors: Ryohei Ueda
+
+0.2.4 (2015-03-08)
+------------------
+* Fix license: WillowGarage -> JSK Lab
+* Contributors: Ryohei Ueda
+
+0.2.3 (2015-02-02)
+------------------
+* Remove rosbuild files
+* Contributors: Ryohei Ueda
+
+0.2.2 (2015-01-30)
+------------------
+
+0.2.1 (2015-01-30)
+------------------
+
+0.2.0 (2015-01-29)
+------------------
+
+0.1.34 (2015-01-29)
+-------------------
+* [jsk_perception, checkerboard_detector] Remove dependency to jsk_pcl_ros
+* Contributors: Ryohei Ueda
+
+0.1.33 (2015-01-24)
+-------------------
+
+0.1.32 (2015-01-12)
+-------------------
+* [jsk_pcl_ros, checkerboard_detector] Fix offset from checker board
+* Contributors: Ryohei Ueda
+
+0.1.31 (2015-01-08)
+-------------------
+* [checkerboard_detector] Fix compilation warning of
+  objectdetection_transform_echo about tf exception
+* [checkerboard_detector] Force to ubscribe topic if ~display is True
+* [checkerboard_detector] Add modeline for emacs to keep coding style
+* something have changed in updatream (maybe cv_bridge), added image_geometry as depends
+
 0.1.30 (2014-12-24)
 -------------------
 

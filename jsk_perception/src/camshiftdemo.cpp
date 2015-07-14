@@ -1,8 +1,9 @@
 #include <ros/ros.h>
+#include <jsk_topic_tools/log_utils.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <dynamic_reconfigure/server.h>
 #include <jsk_perception/camshiftdemoConfig.h>
-#include <jsk_perception/RotatedRectStamped.h>
+#include <jsk_recognition_msgs/RotatedRectStamped.h>
 #include <sensor_msgs/SetCameraInfo.h>
 
 // opencv/samples/cp/camshiftdemo.c
@@ -91,7 +92,7 @@ public:
     pub_hist_ = it.advertise(local_nh.resolveName("histimg"), 1);
 
     sub_rectangle_ = nh.subscribe(nh.resolveName("screenrectangle"), 1, &CamShiftDemo::setRectangleCB, this);
-    pub_result_ = nh.advertise<jsk_perception::RotatedRectStamped>(local_nh.resolveName("result"), 1);
+    pub_result_ = nh.advertise<jsk_recognition_msgs::RotatedRectStamped>(local_nh.resolveName("result"), 1);
 
     //roi_service_ = local_nh.advertiseService("set_roi", sensor_msgs::SetCameraInfo);
     roi_service_ = local_nh.advertiseService("set_roi", &CamShiftDemo::setROICb, this);
@@ -174,7 +175,7 @@ public:
       }
     catch (cv_bridge::Exception error)
       {
-        ROS_ERROR("error");
+        JSK_ROS_ERROR("error");
       }
 
     frame.copyTo(image_);
@@ -225,7 +226,7 @@ public:
 	    cvtColor( backproj_, image_, CV_GRAY2BGR );
 	  ellipse( image_, trackBox_, Scalar(0,0,255), 3, CV_AA );
 
-	  jsk_perception::RotatedRectStamped result_msg;
+	  jsk_recognition_msgs::RotatedRectStamped result_msg;
 	  result_msg.header = msg_ptr->header;
 	  result_msg.rect.x = trackBox_.center.x;
 	  result_msg.rect.y = trackBox_.center.y;
@@ -235,7 +236,7 @@ public:
 	  pub_result_.publish(result_msg);
 
 	} catch (...) {
-	  ROS_WARN("illegal tracBox = x:%f y:%f width:%f height:%f angle:%f",
+	  JSK_ROS_WARN("illegal tracBox = x:%f y:%f width:%f height:%f angle:%f",
 		   trackBox_.center.x, trackBox_.center.y,
 		   trackBox_.size.width, trackBox_.size.height,
 		   trackBox_.angle);
@@ -352,7 +353,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "camshiftdemo");
   ros::NodeHandle n;
   if (n.resolveName("image") == "/image") {
-    ROS_WARN("%s: image has not been remapped! Typical command-line usage:\n"
+    JSK_ROS_WARN("%s: image has not been remapped! Typical command-line usage:\n"
              "\t$ ./%s image:=<image topic>", argv[0], argv[0]);
   }
 

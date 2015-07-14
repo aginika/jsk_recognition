@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <opencv2/opencv.hpp>
+#include <jsk_topic_tools/log_utils.h>
 #include <rospack/rospack.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,9 +15,9 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <geometry_msgs/PointStamped.h>
-#include <jsk_perception/Rect.h>
+#include <jsk_recognition_msgs/Rect.h>
 #include <jsk_perception/ColorHistogramSlidingMatcherConfig.h>
-#include <jsk_pcl_ros/BoundingBoxArray.h>
+#include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
@@ -93,10 +94,10 @@ public:
 		  , _subInfo(_node, "camera_info", 1)
 		  , sync( SyncPolicy(10), _subImage, _subInfo)
   {
-    _pubBestRect = _node.advertise< jsk_perception::Rect >("best_rect", 1);
+    _pubBestRect = _node.advertise< jsk_recognition_msgs::Rect >("best_rect", 1);
     _pubBestPolygon = _node.advertise< geometry_msgs::PolygonStamped >("best_polygon", 1);
     _pubBestPoint = _node.advertise< geometry_msgs::PointStamped >("rough_point", 1);
-    _pubBestBoundingBox = _node.advertise< jsk_pcl_ros::BoundingBoxArray >("best_box", 1);
+    _pubBestBoundingBox = _node.advertise< jsk_recognition_msgs::BoundingBoxArray >("best_box", 1);
     _debug_pub = _it.advertise("debug_image", 1);
     // _subImage = _it.subscribe("image", 1, &MatcherNode::image_cb, this);
     
@@ -137,7 +138,7 @@ public:
   }
   bool template_add(cv::Mat template_image){
     if(template_image.cols==0){
-      ROS_INFO("template_error size==0");
+      JSK_ROS_INFO("template_error size==0");
       return false;
     }
     cv::Mat template_hsv_image; 
@@ -164,7 +165,7 @@ public:
       }
     }
     template_vecs.push_back(template_vec);
-    ROS_INFO("template vec was set successfully");
+    JSK_ROS_INFO("template vec was set successfully");
     return true;
   }
   
@@ -172,7 +173,7 @@ public:
   {
     boost::mutex::scoped_lock lock(_mutex);
     if(template_vecs.size()==0){
-      ROS_INFO("template vec is empty");
+      JSK_ROS_INFO("template vec is empty");
       return;
     }
     cv_bridge::CvImagePtr cv_ptr;
@@ -180,13 +181,13 @@ public:
       cv_ptr = cv_bridge::toCvCopy(msg_ptr, "bgr8");
     }
     catch (cv_bridge::Exception& e){
-      ROS_ERROR("cv_bridge exception: %s", e.what());
+      JSK_ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
     }
     cv::Mat image=cv_ptr->image.clone();
-    ROS_INFO("mat made");
+    JSK_ROS_INFO("mat made");
     if(hsv_integral.size()==0||(image.cols!=hsv_integral.size() && image.rows!=hsv_integral[0].size())){
-      ROS_INFO("before memory size was changed");
+      JSK_ROS_INFO("before memory size was changed");
       hsv_integral.resize(image.cols);
       for(int i=0; i<image.cols; ++i){
 	hsv_integral[i].resize(image.rows);
@@ -194,7 +195,7 @@ public:
 	  hsv_integral[i][j].resize(255);
 	}
       }
-      ROS_INFO("memory size was changed");
+      JSK_ROS_INFO("memory size was changed");
     }
     cv::Mat hsv_image;
     cv::cvtColor(image, hsv_image, CV_BGR2HSV);
@@ -245,7 +246,7 @@ public:
 	}
       }
     } 
-    ROS_INFO("integral histogram made");
+    JSK_ROS_INFO("integral histogram made");
     for(size_t template_index=0; template_index<template_vecs.size(); ++template_index){
       std::vector<unsigned int> template_vec = template_vecs[template_index];
       double max_coe = 0;
@@ -282,9 +283,9 @@ public:
 	  }
 	}
       }
-      ROS_INFO("max_coefficient:%f", max_coe);
+      JSK_ROS_INFO("max_coefficient:%f", max_coe);
       if(boxes.size() == 0 || max_coe < coefficient_thre_for_best_window){
-	ROS_INFO("no objects found");
+	JSK_ROS_INFO("no objects found");
 	if(show_result_){
 	  cv::imshow("result", image);
 	  cv::imshow("template", template_images[template_index]);
@@ -342,7 +343,7 @@ public:
       // best result;
 
       cv::rectangle(image, cv::Point(index_j, index_i), cv::Point(index_j+(max_scale*standard_width), index_i+(max_scale*standard_height)), cv::Scalar(0, 0, 200), 3, 4);
-      jsk_perception::Rect rect;
+      jsk_recognition_msgs::Rect rect;
       rect.x=index_j, rect.y=index_i, rect.width=(int)(max_scale*standard_width); rect.height=(int)(max_scale*standard_height);
       _pubBestRect.publish(rect);
       geometry_msgs::PolygonStamped polygon_msg;
@@ -383,8 +384,8 @@ public:
       best_point.point.z = fT3[2]; 
       best_point.header = msg_ptr->header;
       _pubBestPoint.publish(best_point);
-      jsk_pcl_ros::BoundingBoxArray box_array_msg;
-      jsk_pcl_ros::BoundingBox box_msg;
+      jsk_recognition_msgs::BoundingBoxArray box_array_msg;
+      jsk_recognition_msgs::BoundingBox box_msg;
       box_array_msg.header = box_msg.header = msg_ptr->header;
       box_msg.pose.position = best_point.point;
       box_msg.pose.orientation.x = box_msg.pose.orientation.y = box_msg.pose.orientation.z = 0;

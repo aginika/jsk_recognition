@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -58,17 +58,17 @@ namespace jsk_pcl_ros
     if (!pnh_->getParam("tf_prefix", tf_prefix_))
     {
       if (publish_tf_) {
-        ROS_WARN("~tf_prefix is not specified, using %s", getName().c_str());
+        JSK_ROS_WARN("~tf_prefix is not specified, using %s", getName().c_str());
       }
       tf_prefix_ = getName();
     }
 
     pnh_->param("publish_clouds", publish_clouds_, false);
-    
     pnh_->param("align_boxes", align_boxes_, false);
     pnh_->param("use_pca", use_pca_, false);
+    pnh_->param("force_to_flip_z_axis", force_to_flip_z_axis_, true);
     pc_pub_ = advertise<sensor_msgs::PointCloud2>(*pnh_, "debug_output", 1);
-    box_pub_ = advertise<BoundingBoxArray>(*pnh_, "boxes", 1);
+    box_pub_ = advertise<jsk_recognition_msgs::BoundingBoxArray>(*pnh_, "boxes", 1);
   }
 
   void ClusterPointIndicesDecomposer::subscribe()
@@ -136,8 +136,8 @@ namespace jsk_pcl_ros
   
   int ClusterPointIndicesDecomposer::findNearestPlane(
     const Eigen::Vector4f& center,
-    const jsk_pcl_ros::PolygonArrayConstPtr& planes,
-    const jsk_pcl_ros::ModelCoefficientsArrayConstPtr& coefficients)
+    const jsk_recognition_msgs::PolygonArrayConstPtr& planes,
+    const jsk_recognition_msgs::ModelCoefficientsArrayConstPtr& coefficients)
   {
     double min_distance = DBL_MAX;
     int nearest_index = -1;
@@ -161,13 +161,13 @@ namespace jsk_pcl_ros
     return nearest_index;
   }
 
-  void ClusterPointIndicesDecomposer::computeBoundingBox
+  bool ClusterPointIndicesDecomposer::computeBoundingBox
   (const pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmented_cloud,
    const std_msgs::Header header,
    const Eigen::Vector4f center,
-   const jsk_pcl_ros::PolygonArrayConstPtr& planes,
-   const jsk_pcl_ros::ModelCoefficientsArrayConstPtr& coefficients,
-   jsk_pcl_ros::BoundingBox& bounding_box)
+   const jsk_recognition_msgs::PolygonArrayConstPtr& planes,
+   const jsk_recognition_msgs::ModelCoefficientsArrayConstPtr& coefficients,
+   jsk_recognition_msgs::BoundingBox& bounding_box)
   {
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr
       segmented_cloud_transformed (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -178,30 +178,37 @@ namespace jsk_pcl_ros
       int nearest_plane_index = findNearestPlane(center, planes, coefficients);
       if (nearest_plane_index == -1) {
         segmented_cloud_transformed = segmented_cloud;
-        NODELET_ERROR("no planes to align boxes are given");
+        JSK_NODELET_ERROR("no planes to align boxes are given");
       }
       else {
         Eigen::Vector3f normal, z_axis;
-        normal[0] = coefficients->coefficients[nearest_plane_index].values[0];
-        normal[1] = coefficients->coefficients[nearest_plane_index].values[1];
-        normal[2] = coefficients->coefficients[nearest_plane_index].values[2];
+        if (force_to_flip_z_axis_) {
+          normal[0] = - coefficients->coefficients[nearest_plane_index].values[0];
+          normal[1] = - coefficients->coefficients[nearest_plane_index].values[1];
+          normal[2] = - coefficients->coefficients[nearest_plane_index].values[2];
+        }
+        else {
+          normal[0] = coefficients->coefficients[nearest_plane_index].values[0];
+          normal[1] = coefficients->coefficients[nearest_plane_index].values[1];
+          normal[2] = coefficients->coefficients[nearest_plane_index].values[2];
+        }
         normal = normal.normalized();
-        z_axis[0] = 0; z_axis[1] = 0; z_axis[2] = 1;
-        Eigen::Vector3f rotation_axis = z_axis.cross(normal).normalized();
-        double theta = acos(z_axis.dot(normal));
+        Eigen::Quaternionf rot;
+        rot.setFromTwoVectors(Eigen::Vector3f::UnitZ(), normal);
+        Eigen::AngleAxisf rotation_angle_axis(rot);
+        Eigen::Vector3f rotation_axis = rotation_angle_axis.axis();
+        double theta = rotation_angle_axis.angle();
         if (isnan(theta) ||
             isnan(rotation_axis[0]) ||
             isnan(rotation_axis[1]) ||
             isnan(rotation_axis[2])) {
           segmented_cloud_transformed = segmented_cloud;
-          NODELET_ERROR("cannot compute angle to align the point cloud: [%f, %f, %f], [%f, %f, %f]",
+          JSK_NODELET_ERROR("cannot compute angle to align the point cloud: [%f, %f, %f], [%f, %f, %f]",
                         z_axis[0], z_axis[1], z_axis[2],
                         normal[0], normal[1], normal[2]);
         }
         else {
-          Eigen::Matrix3f m = Eigen::Matrix3f::Identity();
-          m = m * Eigen::AngleAxisf(theta, rotation_axis);
-          
+          Eigen::Matrix3f m = Eigen::Matrix3f::Identity() * rot;
           if (use_pca_) {
             // first project points to the plane
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr projected_cloud
@@ -215,15 +222,24 @@ namespace jsk_pcl_ros
             proj.setModelCoefficients(plane_coefficients);
             proj.setInputCloud(segmented_cloud);
             proj.filter(*projected_cloud);
-
-            pcl::PCA<pcl::PointXYZRGB> pca;
-            pca.setInputCloud(projected_cloud);
-            Eigen::Matrix3f eigen = pca.getEigenVectors();
-            m.col(0) = eigen.col(0);
-            m.col(1) = eigen.col(1);
-            // flip axis to satisfy right-handed system
-            if (m.col(0).cross(m.col(1)).dot(m.col(2)) < 0) {
-              m.col(0) = - m.col(0);
+            if (projected_cloud->points.size() >= 3) {
+              pcl::PCA<pcl::PointXYZRGB> pca;
+              pca.setInputCloud(projected_cloud);
+              Eigen::Matrix3f eigen = pca.getEigenVectors();
+              m.col(0) = eigen.col(0);
+              m.col(1) = eigen.col(1);
+              // flip axis to satisfy right-handed system
+              if (m.col(0).cross(m.col(1)).dot(m.col(2)) < 0) {
+                m.col(0) = - m.col(0);
+              }
+              if (m.col(0).dot(Eigen::Vector3f::UnitX()) < 0) {
+                // rotate around z
+                m = m * Eigen::AngleAxisf(M_PI, Eigen::Vector3f::UnitZ());
+              }
+            }
+            else {
+              JSK_NODELET_ERROR("Too small indices for PCA computation");
+              return false;
             }
           }
             
@@ -266,6 +282,7 @@ namespace jsk_pcl_ros
     bounding_box.dimensions.x = xwidth;
     bounding_box.dimensions.y = ywidth;
     bounding_box.dimensions.z = zwidth;
+    return true;
   }
 
   void ClusterPointIndicesDecomposer::addToDebugPointCloud
@@ -286,9 +303,9 @@ namespace jsk_pcl_ros
   
   void ClusterPointIndicesDecomposer::extract
   (const sensor_msgs::PointCloud2ConstPtr &input,
-   const jsk_pcl_ros::ClusterPointIndicesConstPtr &indices_input,
-   const jsk_pcl_ros::PolygonArrayConstPtr& planes,
-   const jsk_pcl_ros::ModelCoefficientsArrayConstPtr& coefficients)
+   const jsk_recognition_msgs::ClusterPointIndicesConstPtr &indices_input,
+   const jsk_recognition_msgs::PolygonArrayConstPtr& planes,
+   const jsk_recognition_msgs::ModelCoefficientsArrayConstPtr& coefficients)
   {
     if (publish_clouds_) {
       allocatePublishers(indices_input->cluster_indices.size());
@@ -315,7 +332,7 @@ namespace jsk_pcl_ros
     extract.setInputCloud(cloud);
 
     pcl::PointCloud<pcl::PointXYZRGB> debug_output;
-    jsk_pcl_ros::BoundingBoxArray bounding_box_array;
+    jsk_recognition_msgs::BoundingBoxArray bounding_box_array;
     bounding_box_array.header = input->header;
     for (size_t i = 0; i < sorted_indices.size(); i++)
     {
@@ -344,8 +361,12 @@ namespace jsk_pcl_ros
       // adding the pointcloud into debug_output
       addToDebugPointCloud(segmented_cloud, i, debug_output);
       
-      jsk_pcl_ros::BoundingBox bounding_box;
-      computeBoundingBox(segmented_cloud, input->header, center, planes, coefficients, bounding_box);
+      jsk_recognition_msgs::BoundingBox bounding_box;
+      bool successp = computeBoundingBox(
+        segmented_cloud, input->header, center, planes, coefficients, bounding_box);
+      if (!successp) {
+        return;
+      }
       bounding_box_array.boxes.push_back(bounding_box);
     }
     
@@ -359,11 +380,11 @@ namespace jsk_pcl_ros
   
   void ClusterPointIndicesDecomposer::extract
   (const sensor_msgs::PointCloud2ConstPtr &input,
-   const jsk_pcl_ros::ClusterPointIndicesConstPtr &indices_input)
+   const jsk_recognition_msgs::ClusterPointIndicesConstPtr &indices_input)
   {
     extract(input, indices_input,
-            jsk_pcl_ros::PolygonArrayConstPtr(),
-            jsk_pcl_ros::ModelCoefficientsArrayConstPtr());
+            jsk_recognition_msgs::PolygonArrayConstPtr(),
+            jsk_recognition_msgs::ModelCoefficientsArrayConstPtr());
   }
 
   void ClusterPointIndicesDecomposer::allocatePublishers(size_t num)
@@ -373,7 +394,7 @@ namespace jsk_pcl_ros
         for (size_t i = publishers_.size(); i < num; i++)
         {
             std::string topic_name = (boost::format("output%02u") % (i)).str();
-            ROS_INFO("advertising %s", topic_name.c_str());
+            JSK_ROS_INFO("advertising %s", topic_name.c_str());
             ros::Publisher publisher = pnh_->advertise<sensor_msgs::PointCloud2>(topic_name, 1);
             publishers_.push_back(publisher);
         }

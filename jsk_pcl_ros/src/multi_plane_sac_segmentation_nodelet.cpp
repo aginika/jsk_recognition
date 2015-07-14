@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -56,7 +56,7 @@ namespace jsk_pcl_ros
     pnh_->param("use_imu_perpendicular", use_imu_perpendicular_, false);
     
     if (use_imu_perpendicular_ && use_imu_parallel_) {
-      NODELET_ERROR("Cannot use ~use_imu_perpendicular and ~use_imu_parallel at the same time");
+      JSK_NODELET_ERROR("Cannot use ~use_imu_perpendicular and ~use_imu_parallel at the same time");
       return;
     }
     if (use_imu_perpendicular_ || use_imu_parallel_) {
@@ -65,10 +65,10 @@ namespace jsk_pcl_ros
     ////////////////////////////////////////////////////////
     // publishers
     ////////////////////////////////////////////////////////
-    pub_inliers_ = advertise<ClusterPointIndices>(*pnh_, "output_indices", 1);
+    pub_inliers_ = advertise<jsk_recognition_msgs::ClusterPointIndices>(*pnh_, "output_indices", 1);
     pub_coefficients_
-      = advertise<ModelCoefficientsArray>(*pnh_, "output_coefficients", 1);
-    pub_polygons_ = advertise<PolygonArray>(*pnh_, "output_polygons", 1);
+      = advertise<jsk_recognition_msgs::ModelCoefficientsArray>(*pnh_, "output_coefficients", 1);
+    pub_polygons_ = advertise<jsk_recognition_msgs::PolygonArray>(*pnh_, "output_polygons", 1);
   }
 
   void MultiPlaneSACSegmentation::subscribe()
@@ -105,7 +105,7 @@ namespace jsk_pcl_ros
                                           this, _1, _2));
     }
     else if (use_clusters_) {
-      NODELET_INFO("use clusters");
+      JSK_NODELET_INFO("use clusters");
       sub_input_.subscribe(*pnh_, "input", 1);
       sub_clusters_.subscribe(*pnh_, "input_clusters", 1);
       sync_cluster_
@@ -164,7 +164,7 @@ namespace jsk_pcl_ros
     *rest_normal = *normal;
     int counter = 0;
     while (true) {
-      NODELET_INFO("apply RANSAC: %d", counter);
+      JSK_NODELET_INFO("apply RANSAC: %d", counter);
       ++counter;
       pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
       pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
@@ -216,7 +216,7 @@ namespace jsk_pcl_ros
         }
         seg.segment (*inliers, *coefficients);
       }
-      NODELET_INFO("inliers: %lu", inliers->indices.size());
+      JSK_NODELET_INFO("inliers: %lu", inliers->indices.size());
       if (inliers->indices.size() >= min_inliers_) {
         output_inliers.push_back(inliers);
         output_coefficients.push_back(coefficients);
@@ -250,7 +250,7 @@ namespace jsk_pcl_ros
         ex_normal.filter(*next_rest_normal);
       }
       if (next_rest_cloud->points.size() < min_points_) {
-        NODELET_INFO("no more enough points are left");
+        JSK_NODELET_INFO("no more enough points are left");
         return;
       }
       rest_cloud = next_rest_cloud;
@@ -260,7 +260,7 @@ namespace jsk_pcl_ros
 
   void MultiPlaneSACSegmentation::segmentWithClusters(
     const sensor_msgs::PointCloud2::ConstPtr& msg,
-    const ClusterPointIndices::ConstPtr& clusters)
+    const jsk_recognition_msgs::ClusterPointIndices::ConstPtr& clusters)
   {
     boost::mutex::scoped_lock lock(mutex_);
     pcl::PointCloud<PointT>::Ptr input (new pcl::PointCloud<PointT>);
@@ -298,9 +298,9 @@ namespace jsk_pcl_ros
     const std::vector<pcl::ModelCoefficients::Ptr>& coefficients,
     const std::vector<ConvexPolygon::Ptr>& convexes)
   {
-    jsk_pcl_ros::ClusterPointIndices ros_indices_output;
-    jsk_pcl_ros::ModelCoefficientsArray ros_coefficients_output;
-    jsk_pcl_ros::PolygonArray ros_polygon_output;
+    jsk_recognition_msgs::ClusterPointIndices ros_indices_output;
+    jsk_recognition_msgs::ModelCoefficientsArray ros_coefficients_output;
+    jsk_recognition_msgs::PolygonArray ros_polygon_output;
     ros_indices_output.header = header;
     ros_coefficients_output.header = header;
     ros_polygon_output.header = header;
@@ -363,13 +363,13 @@ namespace jsk_pcl_ros
       publishResult(msg->header, inliers, coefficients, convexes);                     
     }
     catch (tf2::ConnectivityException &e) {
-      NODELET_ERROR("Transform error: %s", e.what());
+      JSK_NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
     }
     catch (tf2::InvalidArgumentException &e) {
-      NODELET_ERROR("Transform error: %s", e.what());
+      JSK_NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
     }
     catch (tf2::ExtrapolationException& e) {
-      NODELET_ERROR("Transform error: %s", e.what());
+      JSK_NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
     }
     
   }

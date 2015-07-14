@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -34,7 +34,7 @@
  *********************************************************************/
 
 #include "jsk_pcl_ros/organized_multi_plane_segmentation.h"
-#include "jsk_pcl_ros/ModelCoefficientsArray.h"
+#include "jsk_recognition_msgs/ModelCoefficientsArray.h"
 #include <pcl/segmentation/impl/organized_multi_plane_segmentation.hpp>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/kdtree/kdtree_flann.h>
@@ -65,6 +65,7 @@ namespace jsk_pcl_ros
   void OrganizedMultiPlaneSegmentation::onInit()
   {
     ConnectionBasedNodelet::onInit();
+    pcl::console::setVerbosityLevel(pcl::console::L_ERROR);
     //////////////////////////////////////////////////////////
     // prepare diagnostics
     //////////////////////////////////////////////////////////
@@ -93,23 +94,23 @@ namespace jsk_pcl_ros
     //////////////////////////////////////////////////////////
     // prepare publishers
     //////////////////////////////////////////////////////////
-    pub_ = advertise<ClusterPointIndices>(*pnh_, "output", 1);
-    polygon_pub_ = advertise<PolygonArray>(*pnh_, "output_polygon", 1);
+    pub_ = advertise<jsk_recognition_msgs::ClusterPointIndices>(*pnh_, "output", 1);
+    polygon_pub_ = advertise<jsk_recognition_msgs::PolygonArray>(*pnh_, "output_polygon", 1);
     coefficients_pub_
-      = advertise<ModelCoefficientsArray>(*pnh_, "output_coefficients", 1);
-    org_pub_ = advertise<ClusterPointIndices>(*pnh_, "output_nonconnected", 1);
+      = advertise<jsk_recognition_msgs::ModelCoefficientsArray>(*pnh_, "output_coefficients", 1);
+    org_pub_ = advertise<jsk_recognition_msgs::ClusterPointIndices>(*pnh_, "output_nonconnected", 1);
     org_polygon_pub_
-      = advertise<PolygonArray>(*pnh_, "output_nonconnected_polygon", 1);
+      = advertise<jsk_recognition_msgs::PolygonArray>(*pnh_, "output_nonconnected_polygon", 1);
     org_coefficients_pub_
-      = advertise<ModelCoefficientsArray>(*pnh_, 
+      = advertise<jsk_recognition_msgs::ModelCoefficientsArray>(*pnh_, 
         "output_nonconnected_coefficients", 1);
     
-    refined_pub_ = advertise<ClusterPointIndices>(*pnh_, 
+    refined_pub_ = advertise<jsk_recognition_msgs::ClusterPointIndices>(*pnh_, 
       "output_refined", 1);
     refined_polygon_pub_
-      = advertise<PolygonArray>(*pnh_, "output_refined_polygon", 1);
+      = advertise<jsk_recognition_msgs::PolygonArray>(*pnh_, "output_refined_polygon", 1);
     refined_coefficients_pub_
-      = advertise<ModelCoefficientsArray>(*pnh_, 
+      = advertise<jsk_recognition_msgs::ModelCoefficientsArray>(*pnh_, 
         "output_refined_coefficients", 1);
     
     pub_connection_marker_
@@ -197,7 +198,7 @@ namespace jsk_pcl_ros
     const std::vector<pcl::PointIndices>& boundary_indices,
     IntegerGraphMap& connection_map)
   {
-    NODELET_DEBUG("size of model_coefficients: %lu", model_coefficients.size());
+    JSK_NODELET_DEBUG("size of model_coefficients: %lu", model_coefficients.size());
     if (model_coefficients.size() == 0) {
       return;                   // do nothing
     }
@@ -231,7 +232,7 @@ namespace jsk_pcl_ros
           b_normal = b_normal / b_normal.norm();
         }
         double theta = fabs(acos(a_normal.dot(b_normal)));
-        NODELET_DEBUG("%lu - %lu angle: %f", i, j, theta);
+        JSK_NODELET_DEBUG("%lu - %lu angle: %f", i, j, theta);
         if (theta > M_PI / 2.0) {
           theta = M_PI  - theta;
         }
@@ -261,7 +262,7 @@ namespace jsk_pcl_ros
             std::vector<float> k_sqr_distances;
             if (kdtree.radiusSearch(
                   p, connect_distance_threshold_, k_indices, k_sqr_distances, 1) > 0) {
-              NODELET_DEBUG("%lu - %lu connected", i, j);
+              JSK_NODELET_DEBUG("%lu - %lu connected", i, j);
               foundp = true;
               break;
             }
@@ -277,7 +278,7 @@ namespace jsk_pcl_ros
   void OrganizedMultiPlaneSegmentation::pclIndicesArrayToClusterPointIndices(
     const std::vector<pcl::PointIndices>& inlier_indices,
     const std_msgs::Header& header,
-    jsk_pcl_ros::ClusterPointIndices& output_indices)
+    jsk_recognition_msgs::ClusterPointIndices& output_indices)
   {
     for (size_t i = 0; i < inlier_indices.size(); i++) {
       pcl::PointIndices inlier = inlier_indices[i];
@@ -313,7 +314,7 @@ namespace jsk_pcl_ros
     std::vector<pcl::PointCloud<PointT> >& output_boundary_clouds)
   { 
     std::vector<std::set<int> > cloud_sets;
-    NODELET_DEBUG("connection_map:");
+    JSK_NODELET_DEBUG("connection_map:");
     for (IntegerGraphMap::const_iterator it = connection_map.begin();
          it != connection_map.end();
          ++it) {
@@ -323,7 +324,7 @@ namespace jsk_pcl_ros
       for (size_t i = 0; i < it->second.size(); i++) {
         ss << i << ", ";
       }
-      NODELET_DEBUG("%s", ss.str().c_str());
+      JSK_NODELET_DEBUG("%s", ss.str().c_str());
     }
 
     buildAllGroupsSetFromGraphMap(connection_map, cloud_sets);
@@ -336,7 +337,7 @@ namespace jsk_pcl_ros
       for (std::set<int>::iterator it = cloud_sets[i].begin();
            it != cloud_sets[i].end();
            ++it) {
-        NODELET_DEBUG("%lu includes %d", i, *it);
+        JSK_NODELET_DEBUG("%lu includes %d", i, *it);
         new_coefficients = model_coefficients[*it].values;
         pcl::PointIndices inlier = inlier_indices[*it];
         pcl::PointIndices boundary_inlier = boundary_indices[*it];
@@ -375,7 +376,7 @@ namespace jsk_pcl_ros
         output_boundary_clouds.push_back(chull_output);
       }
       else {
-        NODELET_ERROR("failed to build convex");
+        JSK_NODELET_ERROR("failed to build convex");
       }
     }
 
@@ -420,9 +421,9 @@ namespace jsk_pcl_ros
     const std::vector<pcl::PointCloud<PointT> >& boundaries,
     const std::vector<pcl::ModelCoefficients>& model_coefficients)
   {
-    jsk_pcl_ros::ClusterPointIndices indices;
-    jsk_pcl_ros::ModelCoefficientsArray coefficients_array;
-    jsk_pcl_ros::PolygonArray polygon_array;
+    jsk_recognition_msgs::ClusterPointIndices indices;
+    jsk_recognition_msgs::ModelCoefficientsArray coefficients_array;
+    jsk_recognition_msgs::PolygonArray polygon_array;
     indices.header = header;
     polygon_array.header = header;
     coefficients_array.header = header;
@@ -693,7 +694,7 @@ namespace jsk_pcl_ros
       ne.setNormalEstimationMethod (ne.AVERAGE_DEPTH_CHANGE);
     }
     else {
-      NODELET_FATAL("unknown estimation method, force to use COVARIANCE_MATRIX: %d",
+      JSK_NODELET_FATAL("unknown estimation method, force to use COVARIANCE_MATRIX: %d",
                     estimation_method_);
       ne.setNormalEstimationMethod (ne.COVARIANCE_MATRIX);
     }

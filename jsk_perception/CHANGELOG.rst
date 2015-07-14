@@ -2,6 +2,260 @@
 Changelog for package jsk_perception
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.13 (2015-06-11)
+-------------------
+* [jsk_perception] Use dynamic_reconfigure in ImageTimeDiff
+* [jsk_perception] Update image_time_diff to use hue/saturation
+* [jsk_perception] Add Kmeans section to README
+* [jek_perception] Add kmeans
+* [jsk_perception] Add GaussignBlur section to README
+* [jsk_perception] Add gaussian_blur
+* [jsk_perception] Update README.md for squashing dilate/erode
+* [jsk_perception] Squash erode/dilate to morphological_operator
+* [jsk_perception] Update README.md for morphological operators
+* [jsk_perception] Add advanced morphological transformations
+* [jsk_perception] Use isBGR/isRGB/isBGRA/isRGBA in ApplyMaskImage
+* [jsk_perception] Add isBGR/isRGB/isBGRA/isRGBA
+* [jsk_perception] Use header to synchronize in ImageTimeDiff
+* [jsk_perception] Update image_time_diff.py to use ImageDifferenceValue.msg
+* [jsk_perception] Update docs of image_time_diff for output
+* [jsk_perception] Publish with stamp in image_time_diff
+* [jsk_perception/image_publisher] Do not exit program even though no file is found
+* uncomment camera_info_cb
+* add subscription of image_raw
+* Updated Sliding window detector.
+  - Removed the trainer
+  - Added Bootstraper
+* [jsk_perception] Update README for #927
+* [jsk_perception] Enable apply_mask convert mask black to transparent
+* Changed from reading saved image from directory to RosBag files
+* [jsk_perception] Use jsk_topic_tools/log_utils.h for JSK_ROS_INFO,
+  JSK_NODELET_INFO and so on
+* [jsk_perception] add diff per pixel to ImageTimeDiff
+* [jsk_perception] Fix bug in apply_mask in converting BGRA/RGBA input image
+* [jsk_perception] remove no need get_param in image_publisher
+* [jsk_perception] Enable HSVDecomposer to handle BGRA/RGBA image
+* [jsk_perception] Enable ApplyMask handle BGRA/RGBA image
+* [jsk_perception] ApplyMask Mono8 encoding to publish mask
+* [jsk_perception] Add publish_info param to image_publisher
+* [jsk_perception] Add dynamic_reconfigure feature to ImagePublisher
+* [jsk_perception] Publish the difference between start and current image
+* [jsk_perception][ApplyMaskImage] mask image should be mono8
+* Node to for training the classifier for Sliding Window Object Detector
+* [jsk_perception] Ignore trained_data directory from git filesystem
+* Contributors: Kentaro Wada, Ryohei Ueda, Eisoku Kuroiwa, Krishneel Chaudhary
+
+0.2.12 (2015-05-04)
+-------------------
+* Revert "[jsk_perception/point_pose_extractor] Use OpenCV's matcher class to estimate mathcing"
+* [jsk_perception/point_pose_extractor] Use OpenCV's matcher class to
+  estimate mathcing
+* [jsk_perception/point_pose_extractor] Add license header
+* [jsk_perception] Untabify point_pose_extractor.cpp
+* [jsk_perception/point_pose_extractor] Publish PoseStamped from
+  point_pose_extractor result
+* add ROS_INFO
+* [jsk_perception] check if pcam.intrinsicMatrix is valid
+* [jsk_perception] Download drill trained data in compiling time
+* Removed opencv non-free header directive
+  Corrected the nodelet name in CMakeLists.txt
+* Corrected the nodelet name in CMakeLists.txt
+* Removed opencv non-free header directive
+* Nodelet for Edge, Contour Thinning and Nodelet for Sliding window object detector
+* [jsk_perception] add Fisheye Rotate parameter
+* add upside down option to cfg
+* add Fisheye Ray Publisher
+* [jsk_perception] Add ProjectImagePoint nodelet to project image local
+  coordinates into 3-D point
+* [jsk_perception] Update README for fisheye
+* [jsk_perception] update Fisheye To Panoarama
+* [jsk_perception] Modify typo
+* [jsk_perception] Add MaskImageGenerator
+* add scale command to shrink the output and make faster
+* add cfg
+* [jsk_perception] Add fisheye rectify
+* [jsk_perception] Add attributeError message to image_publisher.py
+* [jsk_perception] Fix README.md about erode/dilate nodelets
+* Merge pull request #834 from wkentaro/update-readme-for-pr-811
+  [jsk_perception] Update README for histogram max_value of SingleChannelHistogram
+* [jsk_perception] Update README for histogram max_value of SingleChannelHistogram
+* [jsk_perception] Update README for iterations param of Dilate/ErodeMaskImage
+* [jsk_perception] Add iteration param to DilateMaskImage & ErodeMaskImage
+* Contributors: Kamada Hitoshi, Kentaro Wada, Ryohei Ueda, Yuto Inagaki, iKrishneel
+
+0.2.11 (2015-04-13)
+-------------------
+* add encoded points rate
+* Contributors: Kamada Hitoshi
+
+0.2.10 (2015-04-09)
+-------------------
+* [jsk_perception] add Simple Fisheye to Panorama
+* [jsk_perception] changed order of dynamic reconfigure
+* [jsk_perception] default max value of histogram should be 256 to include 255 pixel
+* [jsk_perception] print number of point when encoding sparse image
+* [jsk_perception] Publish empty camera info from image_publisher.py
+* [jsk_perception] Add sample for ColorHistogramLabelMatch
+* [jsk_perception] Add documentation about ColorHistogramLabelMatch
+* Contributors: Yuki Furuta, Ryohei Ueda, Yuto Inagaki, Kamada Hitoshi, Kentaro Wada
+
+0.2.9 (2015-03-29)
+------------------
+* 0.2.8
+* Update Changelog
+* Contributors: Ryohei Ueda
+
+0.2.8 (2015-03-29)
+------------------
+
+0.2.7 (2015-03-26)
+------------------
+
+0.2.6 (2015-03-25)
+------------------
+
+0.2.5 (2015-03-17)
+------------------
+* check target cloud data ifnot invalid
+* Validate image message without image array (width == 0 and height == 0)
+* Enhance: more specific error exception
+* Change to avoid SyntaxWarning about not assigning rospy.Publisher argument queue_size
+* Change import libs with reasonable order (thirdparty -> ros)
+* Contributors: Kentaro Wada, Yu Ohara
+
+0.2.4 (2015-03-08)
+------------------
+* [jsk_perception] Add simple script to publish image file into ros image
+* Fix license: WillowGarage -> JSK Lab
+* Contributors: Ryohei Ueda
+
+0.2.3 (2015-02-02)
+------------------
+* [jsk_pcl_ros, jsk_perception] Move mask image operation to jsk_perception
+* Remove rosbuild files
+* [jsk_perception] Add ErodeMaskImage nodelet
+* [jsk_perception] Add DilateMaskImage
+* Contributors: Ryohei Ueda
+
+0.2.2 (2015-01-30)
+------------------
+* [jsk_perception] add posedetection_msgs
+* add image_view2 to depends
+* Contributors: Kei Okada
+
+0.2.1 (2015-01-30)
+------------------
+* add image_view2 to depends
+
+0.2.0 (2015-01-29)
+------------------
+
+0.1.34 (2015-01-29)
+-------------------
+* [jsk_perception, checkerboard_detector] Remove dependency to jsk_pcl_ros
+* [jsk_pcl_ros, jsk_perception] Move find_object_on_plane from
+  jsk_perception to jsk_pcl_ros to make these packages independent
+* [jsk_pcl_ros, jsk_perception] Use jsk_recognition_msgs
+* [jsk_pcl_ros, jsk_perception, resized_image_transport] Do not include
+  jsk_topic_tools/nodelet.cmake because it is exported by CFG_EXTRAS
+* [imagesift] Better support of masking image:
+  1) Use jsk_perception::boundingRectOfMaskImage to compute ROI
+  2) support mask image in imagesift.cpp to make better performance
+* [jsk_perception] Export library
+* [jsk_perception] Do not use cv::boundingRect to compute bounding box of
+  mask image
+* [jsk_perception] install include directory of jsk_perception
+* Contributors: Ryohei Ueda
+
+0.1.33 (2015-01-24)
+-------------------
+* [jsk_perception] FindObjectOnPlane: Find object on plane from 2d binary
+  image and 3-d polygon coefficients
+* [jsk_perception] Publish convex hull image of mask from ContourFinder
+* [jsk_perception] Fix min_area parameter to work in BlobDetector
+* [jsk_pcl_ros, jsk_perception] Fix CmakeList for catkin build. Check jsk_topic_tools_SOURCE_PREFIX
+* [jsk_perception] Add MultiplyMaskImage
+* [jsk_perception] Add ~approximate_sync parameter to toggle
+  exact/approximate synchronization
+* [jsk_perception] Add UnapplyMaskImage
+* [jsk_perception] Add blob image to document
+* [jsk_perception] Add BlobDetector
+* [jsk_perception] Colorize label 0 as black because label-0 indicates
+  masked region
+* [jsk_perception] AddMaskImage to add two mask images into one image
+* [jsk_perception] Increase label index of SLICSuperPixels to avoid 0. 0
+  is planned to be used as 'masked'
+* [jsk_perception] Publish result binary image as mono image from ColorHistogramMatch
+* [jsk_perception] Extract mask image from coefficients of histogram
+  matching in ColorHistogramLabelMatch
+* [jsk_perception] Publish result of coefficient calculation as float image
+* [jsk_perception] Support mask image in ColorHistogramLabelMatch
+* [jsk_perception] Use OpenCV's function to normalize histogram and add
+  min and max value of histogram in ColorHistogramLabelMatch
+* [jsk_perception] Add ~min_value and ~max_value to SingleChannelHistogram
+* [jsk_perception] SingleChannelHistogram to compute histogram of single
+  channel image
+* [jsk_perception] Add YCrCb decomposer
+* [jsk_perception] Add LabDecomposer to decompose BGR/RGB image into Lab
+  color space
+* [jsk_perception] Use cv::split to split bgr and hsv image into each channel
+* [jsk_perception] Fix metrics of ColorHistogramLabelMatch:
+  1) correlation
+  original value is [-1:1] and 1 is perfect. we apply (1 - x) / 2
+  2) chi-squared
+  original value is [0:+inf] and 0 is perfect. we apply 1 / (1 + x^2)
+  3) intersect
+  original value is [0:1] and 1 is perfect. we apply x
+  4) bhattacharyya
+  original value is [0:1] and 0 is perfect. we apply 1 - x
+  5, 6) EMD
+  original value is [0:+inf] and 0 is perfect. we apply 1 / (1 + x^2)
+* [jsk_perception] Publish more useful debug image from SLICSuperPixels
+  and add documentation.
+* [jsk_perception] Publish image of interest from ColorHistogram
+* [jsk_perception] Implement 6 different method to compute coefficients
+  between two histograms
+* [jsk_perception] Increase the maximum number of super pixels
+* [jsk_perception] Fix ColorHistogram minor bags:
+  1. Support rect message out side of image
+  2. Use mask image in HSV histogram calculation
+* [jsk_perception] Fix HSVDecomposer color space conversion: support RGB8
+* [jsk_perception] color matching based on histogram and label information
+* [jsk_perception] Add utlity to visualize mask image: ApplyMaskImage
+* [jsk_perception] Add GridLabel
+* [jsk_perception] Publish hisotgram messages under private namespace
+* [jsk_perception] Add simple launch file as sample of superpixels
+* [jsk_perception] Utility to colorize labels of segmentation
+* [jsk_perception] Fix SLICSuperPixels:
+  1) if input image if BGR8
+  2) transpose the result of clustering
+* [jsk_perception] Publish segmentation result as cv::Mat<int> and use
+  patched version of SLIC-SuperPixels to get better performance
+* [jsk_perception] Support RGB8 and gray scale color in SLICSuperPixels
+* [jsk_perception] Add dynamic_reconfigure interface to SLICSuperPixels
+* [jsk_perception] Separate SLICSuperPixels into header and cpp files
+* [jsk_perception] Publish result of segmentation of slic superpixels as image
+* [jsk_perception] Add snake segmentation
+* [jsk_perception] ContourFinder
+* [jsk_perception] Support one-channel image in GrabCut
+* [jsk_perception] HSVDecomposer to decompose RGB into HSV separate images
+* [jsk_perception] Add RGBDecomposer to decompose RGB channels into
+  separate images
+* Contributors: Ryohei Ueda
+
+0.1.32 (2015-01-12)
+-------------------
+
+0.1.31 (2015-01-08)
+-------------------
+* [jsk_perception] Add parameter to select seed policy (definitely
+  back/foreground or probably back/foreground) to GrabCut
+* adapt attention-clipper for fridge demo
+* [jsk_perception] Publish mask image of grabcut result
+* [jsk_perception] add GrabCut nodelet
+* Remove roseus from build dependency of jsk_perception
+* added debug pub
+
 0.1.30 (2014-12-24)
 -------------------
 

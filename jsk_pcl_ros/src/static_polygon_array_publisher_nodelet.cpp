@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -51,18 +51,18 @@ namespace jsk_pcl_ros
       = jsk_topic_tools::readVectorParameter(*pnh_, "frame_ids",
                                              frame_ids_);
     if (!frame_id_read_p) {
-      NODELET_FATAL("failed to read frame_ids from ~frame_ids");
+      JSK_NODELET_FATAL("failed to read frame_ids from ~frame_ids");
       return;
     }
     
     bool polygon_read_p = readPolygonArray("polygon_array");
     if (!polygon_read_p) {
-      NODELET_FATAL("failed to read polygons from ~polygon_array");
+      JSK_NODELET_FATAL("failed to read polygons from ~polygon_array");
       return;
     }
 
     if (frame_ids_.size() != polygons_.polygons.size()) {
-      NODELET_FATAL("the size of frame_ids(%lu) does not match the size of polygons(%lu)",
+      JSK_NODELET_FATAL("the size of frame_ids(%lu) does not match the size of polygons(%lu)",
                     frame_ids_.size(), polygons_.polygons.size());
       return;
     }
@@ -74,22 +74,22 @@ namespace jsk_pcl_ros
     }
     
     if (!use_periodic_ && !use_message_ && !use_trigger_) {
-      NODELET_FATAL("~use_preiodic, ~use_trigger nor ~use_message is not true");
+      JSK_NODELET_FATAL("~use_preiodic, ~use_trigger nor ~use_message is not true");
       return;
     }
     polygons_.header.frame_id = frame_ids_[0];
     coefficients_.header.frame_id = frame_ids_[0];
 
     if (!use_periodic_) {
-      polygon_pub_ = advertise<jsk_pcl_ros::PolygonArray>(
+      polygon_pub_ = advertise<jsk_recognition_msgs::PolygonArray>(
         *pnh_, "output_polygons", 1);
-      coefficients_pub_ = advertise<jsk_pcl_ros::ModelCoefficientsArray>(
+      coefficients_pub_ = advertise<jsk_recognition_msgs::ModelCoefficientsArray>(
         *pnh_, "output_coefficients", 1);
     }
     else {
-      polygon_pub_ = pnh_->advertise<jsk_pcl_ros::PolygonArray>(
+      polygon_pub_ = pnh_->advertise<jsk_recognition_msgs::PolygonArray>(
         "output_polygons", 1);
-      coefficients_pub_ = pnh_->advertise<jsk_pcl_ros::ModelCoefficientsArray>(
+      coefficients_pub_ = pnh_->advertise<jsk_recognition_msgs::ModelCoefficientsArray>(
         "output_coefficients", 1);
       subscribe();
       timer_ = pnh_->createTimer(ros::Duration(1.0 / periodic_rate_), &StaticPolygonArrayPublisher::timerCallback, this);
@@ -126,7 +126,7 @@ namespace jsk_pcl_ros
 
   void StaticPolygonArrayPublisher::triggerCallback(
     const sensor_msgs::PointCloud2::ConstPtr& input,
-    const Int32Stamped::ConstPtr& trigger)
+    const jsk_recognition_msgs::Int32Stamped::ConstPtr& trigger)
   {
     publishPolygon(input->header.stamp);
   }
@@ -186,7 +186,7 @@ namespace jsk_pcl_ros
                 polygon.polygon.points.push_back(point);
               }
               else {
-                NODELET_FATAL("%s[%lu][%lu] is not array or the length is not 3",
+                JSK_NODELET_FATAL("%s[%lu][%lu] is not array or the length is not 3",
                               param_name.c_str(), toplevel_i, secondlevel_i);
                 return false;
               }
@@ -196,19 +196,19 @@ namespace jsk_pcl_ros
             coefficients_.coefficients.push_back(polygonToModelCoefficients(polygon));
           }
           else {
-            NODELET_FATAL("%s[%lu] is not array or not enough points", param_name.c_str(), toplevel_i);
+            JSK_NODELET_FATAL("%s[%lu] is not array or not enough points", param_name.c_str(), toplevel_i);
             return false;
           }
         }
         return true;
       }
       else {
-        NODELET_FATAL("%s is not array", param_name.c_str());
+        JSK_NODELET_FATAL("%s is not array", param_name.c_str());
         return false;
       }
     }
     else {
-      NODELET_FATAL("no %s is available on parameter server", param_name.c_str());
+      JSK_NODELET_FATAL("no %s is available on parameter server", param_name.c_str());
       return false;
     }
     return true;

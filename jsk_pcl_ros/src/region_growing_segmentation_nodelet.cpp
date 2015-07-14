@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -35,7 +35,7 @@
 
 #include "jsk_pcl_ros/region_growing_segmentation.h"
 
-#include "jsk_pcl_ros/ClusterPointIndices.h"
+#include "jsk_recognition_msgs/ClusterPointIndices.h"
 #include <pcl/segmentation/impl/region_growing.hpp>
 #include <pluginlib/class_list_macros.h>
 
@@ -51,7 +51,7 @@ namespace jsk_pcl_ros
     dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind (&RegionGrowingSegmentation::configCallback, this, _1, _2);
     srv_->setCallback (f);
-    pub_ = advertise<jsk_pcl_ros::ClusterPointIndices>(*pnh_, "output", 1);
+    pub_ = advertise<jsk_recognition_msgs::ClusterPointIndices>(*pnh_, "output", 1);
   }
 
   void RegionGrowingSegmentation::subscribe()
@@ -106,7 +106,7 @@ namespace jsk_pcl_ros
     std::vector <pcl::PointIndices> clusters;
     reg.extract (clusters);
 
-    jsk_pcl_ros::ClusterPointIndices output;
+    jsk_recognition_msgs::ClusterPointIndices output;
     output.header = msg->header;
 
     for (size_t i = 0; i < clusters.size(); i++) {

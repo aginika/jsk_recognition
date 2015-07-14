@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -54,11 +54,11 @@ namespace jsk_pcl_ros
         &RegionGrowingMultiplePlaneSegmentation::configCallback, this, _1, _2);
     srv_->setCallback (f);
 
-    pub_polygons_ = advertise<PolygonArray>(
+    pub_polygons_ = advertise<jsk_recognition_msgs::PolygonArray>(
       *pnh_, "output/polygons", 1);
-    pub_inliers_ = advertise<ClusterPointIndices>(
+    pub_inliers_ = advertise<jsk_recognition_msgs::ClusterPointIndices>(
       *pnh_, "output/inliers", 1);
-    pub_coefficients_ = advertise<ModelCoefficientsArray>(
+    pub_coefficients_ = advertise<jsk_recognition_msgs::ModelCoefficientsArray>(
       *pnh_, "output/coefficients", 1);
   }
 
@@ -156,12 +156,15 @@ namespace jsk_pcl_ros
       setCondifionFunctionParameter(angular_threshold_, distance_threshold_);
       cec.setConditionFunction(
         &RegionGrowingMultiplePlaneSegmentation::regionGrowingFunction);
+      //ros::Time before = ros::Time::now();
       cec.segment (*clusters);
+      // ros::Time end = ros::Time::now();
+      // ROS_INFO("segment took %f sec", (before - end).toSec());
     }
     // estimate planes
     std::vector<pcl::PointIndices::Ptr> all_inliers;
     std::vector<pcl::ModelCoefficients::Ptr> all_coefficients;
-    PolygonArray ros_polygon;
+    jsk_recognition_msgs::PolygonArray ros_polygon;
     ros_polygon.header = msg->header;
     for (size_t i = 0; i < clusters->size(); i++) {
       pcl::PointIndices::Ptr plane_inliers(new pcl::PointIndices);
@@ -174,6 +177,13 @@ namespace jsk_pcl_ros
           = convexFromCoefficientsAndInliers<pcl::PointXYZRGB>(
             cloud, plane_inliers, plane_coefficients);
         if (convex) {
+          // check direction
+          Eigen::Vector3f coefficient_normal(plane_coefficients->values[0],
+                                             plane_coefficients->values[1],
+                                             plane_coefficients->values[2]);
+          if (convex->getNormalFromVertices().dot(coefficient_normal) < 0) {
+            convex = boost::make_shared<ConvexPolygon>(convex->flipConvex());
+          }
           geometry_msgs::PolygonStamped polygon;
           polygon.polygon = convex->toROSMsg();
           polygon.header = msg->header;
@@ -184,12 +194,12 @@ namespace jsk_pcl_ros
       }
     }
     
-    ClusterPointIndices ros_indices;
+    jsk_recognition_msgs::ClusterPointIndices ros_indices;
     ros_indices.cluster_indices =
       pcl_conversions::convertToROSPointIndices(all_inliers, msg->header);
     ros_indices.header = msg->header;
     pub_inliers_.publish(ros_indices);
-    ModelCoefficientsArray ros_coefficients;
+    jsk_recognition_msgs::ModelCoefficientsArray ros_coefficients;
     ros_coefficients.header = msg->header;
     ros_coefficients.coefficients =
       pcl_conversions::convertToROSModelCoefficients(
@@ -198,12 +208,6 @@ namespace jsk_pcl_ros
     pub_polygons_.publish(ros_polygon);
   }
 
-  void RegionGrowingMultiplePlaneSegmentation::updateDiagnostic(
-      diagnostic_updater::DiagnosticStatusWrapper &stat)
-  {
-
-  }
-  
   double RegionGrowingMultiplePlaneSegmentation::global_angular_threshold = 0.0;
   double RegionGrowingMultiplePlaneSegmentation::global_distance_threshold = 0.0;
   boost::mutex RegionGrowingMultiplePlaneSegmentation::global_custom_condigion_function_mutex;

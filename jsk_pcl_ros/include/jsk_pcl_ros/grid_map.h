@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -35,7 +35,7 @@
 #ifndef JSK_PCL_ROS_GRID_MAP_H_
 #define JSK_PCL_ROS_GRID_MAP_H_
 
-#include <jsk_pcl_ros/SparseOccupancyGrid.h>
+#include <jsk_recognition_msgs/SparseOccupancyGrid.h>
 
 #include "jsk_pcl_ros/grid_index.h"
 #include "jsk_pcl_ros/grid_line.h"
@@ -84,7 +84,7 @@ namespace jsk_pcl_ros
     // toMsg does not fill header, be carefull
     virtual void originPose(Eigen::Affine3f& output);
     virtual void originPose(Eigen::Affine3d& output);
-    virtual void toMsg(SparseOccupancyGrid& grid);
+    virtual void toMsg(jsk_recognition_msgs::SparseOccupancyGrid& grid);
     virtual Plane toPlane();
     virtual Plane::Ptr toPlanePtr();
     virtual void vote();

@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -38,20 +38,21 @@
 #include <ros/ros.h>
 #include <ros/names.h>
 #include <pcl_ros/pcl_nodelet.h>
-
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 
-#include "jsk_pcl_ros/ClusterPointIndices.h"
+#include "jsk_recognition_msgs/ClusterPointIndices.h"
 #include "sensor_msgs/PointCloud2.h"
-#include "jsk_pcl_ros/ModelCoefficientsArray.h"
-#include "jsk_pcl_ros/PolygonArray.h"
+#include "jsk_recognition_msgs/ModelCoefficientsArray.h"
+#include "jsk_recognition_msgs/PolygonArray.h"
 #include <dynamic_reconfigure/server.h>
 #include "jsk_pcl_ros/MultiPlaneExtractionConfig.h"
 #include "jsk_pcl_ros/pcl_util.h"
 #include "jsk_pcl_ros/pcl_conversion_util.h"
 #include <jsk_topic_tools/vital_checker.h>
 #include <jsk_topic_tools/diagnostic_nodelet.h>
+#include "jsk_pcl_ros/tf_listener_singleton.h"
 
 namespace jsk_pcl_ros
 {
@@ -61,9 +62,22 @@ namespace jsk_pcl_ros
     
     typedef message_filters::sync_policies::ExactTime<
     sensor_msgs::PointCloud2,
-    jsk_pcl_ros::ClusterPointIndices,
-    jsk_pcl_ros::ModelCoefficientsArray,
-    jsk_pcl_ros::PolygonArray> SyncPolicy;
+    jsk_recognition_msgs::ClusterPointIndices,
+    jsk_recognition_msgs::ModelCoefficientsArray,
+    jsk_recognition_msgs::PolygonArray> SyncPolicy;
+    typedef message_filters::sync_policies::ExactTime<
+      sensor_msgs::PointCloud2,
+      jsk_recognition_msgs::ModelCoefficientsArray,
+      jsk_recognition_msgs::PolygonArray> SyncWithoutIndicesPolicy;
+    typedef message_filters::sync_policies::ApproximateTime<
+      sensor_msgs::PointCloud2,
+      jsk_recognition_msgs::ClusterPointIndices,
+      jsk_recognition_msgs::ModelCoefficientsArray,
+      jsk_recognition_msgs::PolygonArray> ASyncPolicy;
+    typedef message_filters::sync_policies::ApproximateTime<
+      sensor_msgs::PointCloud2,
+      jsk_recognition_msgs::ModelCoefficientsArray,
+      jsk_recognition_msgs::PolygonArray> ASyncWithoutIndicesPolicy;
     typedef jsk_pcl_ros::MultiPlaneExtractionConfig Config;
 
     MultiPlaneExtraction(): DiagnosticNodelet("MultiPlaneExtraction") { }
@@ -74,9 +88,13 @@ namespace jsk_pcl_ros
     virtual void onInit();
     
     virtual void extract(const sensor_msgs::PointCloud2::ConstPtr& input,
-                         const jsk_pcl_ros::ClusterPointIndices::ConstPtr& indices,
-                         const jsk_pcl_ros::ModelCoefficientsArray::ConstPtr& coefficients,
-                         const jsk_pcl_ros::PolygonArray::ConstPtr& polygons);
+                         const jsk_recognition_msgs::ClusterPointIndices::ConstPtr& indices,
+                         const jsk_recognition_msgs::ModelCoefficientsArray::ConstPtr& coefficients,
+                         const jsk_recognition_msgs::PolygonArray::ConstPtr& polygons);
+    virtual void extract(
+      const sensor_msgs::PointCloud2::ConstPtr& input,
+      const jsk_recognition_msgs::ModelCoefficientsArray::ConstPtr& coefficients,
+      const jsk_recognition_msgs::PolygonArray::ConstPtr& polygons);
     
     virtual void configCallback (Config &config, uint32_t level);
 
@@ -90,12 +108,16 @@ namespace jsk_pcl_ros
     ////////////////////////////////////////////////////////
     boost::mutex mutex_;
     ros::Publisher pub_, nonplane_pub_;
+    ros::Publisher pub_indices_;
     boost::shared_ptr <dynamic_reconfigure::Server<Config> > srv_;
     message_filters::Subscriber<sensor_msgs::PointCloud2> sub_input_;
-    message_filters::Subscriber<jsk_pcl_ros::ModelCoefficientsArray> sub_coefficients_;
-    message_filters::Subscriber<jsk_pcl_ros::PolygonArray> sub_polygons_;
-    message_filters::Subscriber<jsk_pcl_ros::ClusterPointIndices> sub_indices_;
-    boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> >sync_;
+    message_filters::Subscriber<jsk_recognition_msgs::ModelCoefficientsArray> sub_coefficients_;
+    message_filters::Subscriber<jsk_recognition_msgs::PolygonArray> sub_polygons_;
+    message_filters::Subscriber<jsk_recognition_msgs::ClusterPointIndices> sub_indices_;
+    boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> > sync_;
+    boost::shared_ptr<message_filters::Synchronizer<SyncWithoutIndicesPolicy> > sync_wo_indices_;
+    boost::shared_ptr<message_filters::Synchronizer<ASyncPolicy> > async_;
+    boost::shared_ptr<message_filters::Synchronizer<ASyncWithoutIndicesPolicy> > async_wo_indices_;
 
     ////////////////////////////////////////////////////////
     // Diagnostics Variables
@@ -105,9 +127,14 @@ namespace jsk_pcl_ros
     ////////////////////////////////////////////////////////
     // Parameters
     ////////////////////////////////////////////////////////
+    tf::TransformListener* tf_listener_;
+    bool use_async_;
     int maximum_queue_size_;
     double min_height_, max_height_;
-    
+    bool use_indices_;
+    double maginify_;
+    bool use_sensor_frame_;
+    std::string sensor_frame_;
   private:
     
     

@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -41,7 +41,7 @@
 #include <pcl_ros/pcl_nodelet.h>
 #include <sensor_msgs/Image.h>
 #include <geometry_msgs/PointStamped.h>
-#include <jsk_pcl_ros/DepthErrorResult.h>
+#include <jsk_recognition_msgs/DepthErrorResult.h>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>

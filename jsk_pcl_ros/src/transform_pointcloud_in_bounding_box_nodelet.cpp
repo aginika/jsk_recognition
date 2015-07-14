@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <jsk_topic_tools/log_utils.h>
 #include "jsk_pcl_ros/transform_pointcloud_in_bounding_box.h"
 #include <eigen_conversions/eigen_msg.h>
 #include "jsk_pcl_ros/pcl_conversion_util.h"
@@ -65,7 +66,7 @@ namespace jsk_pcl_ros
 
   void TransformPointcloudInBoundingBox::transform(
     const sensor_msgs::PointCloud2::ConstPtr& msg,
-    const BoundingBox::ConstPtr& box_msg)
+    const jsk_recognition_msgs::BoundingBox::ConstPtr& box_msg)
   {
     try
     {
@@ -82,11 +83,11 @@ namespace jsk_pcl_ros
     }
     catch (tf2::ConnectivityException &e)
     {
-      NODELET_ERROR("Transform error: %s", e.what());
+      JSK_NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
     }
     catch (tf2::InvalidArgumentException &e)
     {
-      NODELET_ERROR("Transform error: %s", e.what());
+      JSK_NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
     }
   }
 }

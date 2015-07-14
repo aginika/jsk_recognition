@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -122,8 +122,8 @@ namespace jsk_pcl_ros
   
   void ColorizeDistanceFromPlane::colorize(
     const sensor_msgs::PointCloud2::ConstPtr& cloud_msg,
-    const ModelCoefficientsArray::ConstPtr& coefficients_msg,
-    const PolygonArray::ConstPtr& polygons)
+    const jsk_recognition_msgs::ModelCoefficientsArray::ConstPtr& coefficients_msg,
+    const jsk_recognition_msgs::PolygonArray::ConstPtr& polygons)
   {
     boost::mutex::scoped_lock lock(mutex_);
     if (coefficients_msg->coefficients.size() == 0) {
@@ -148,7 +148,7 @@ namespace jsk_pcl_ros
         convexes.push_back(convex_ptr);
       }
       else {
-        NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ":: there is no points in the polygon");
+        JSK_NODELET_ERROR_STREAM(__PRETTY_FUNCTION__ << ":: there is no points in the polygon");
       }
     }
 

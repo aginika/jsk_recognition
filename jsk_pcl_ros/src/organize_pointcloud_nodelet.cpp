@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -43,7 +43,7 @@ namespace jsk_pcl_ros
   void OrganizePointCloud::extract(const sensor_msgs::PointCloud2ConstPtr &input)
   {
     // skip empty cloud
-    ROS_INFO_STREAM("received input clouds, convert range image, resolution: " << angular_resolution << ", width(deg): " << angle_width << ", height(deg):" << angle_height << ", min_points:" << min_points);
+    JSK_ROS_INFO_STREAM("received input clouds, convert range image, resolution: " << angular_resolution << ", width(deg): " << angle_width << ", height(deg):" << angle_height << ", min_points:" << min_points);
 
     if ( input->width < min_points ) return;
 
@@ -63,9 +63,9 @@ namespace jsk_pcl_ros
     pcl::RangeImage rangeImage;
     rangeImage.createFromPointCloud(pointCloud, angularResolution, maxAngleWidth, maxAngleHeight,
                                     sensorPose, coordinate_frame, noiseLevel, minRange, borderSize);
-    ROS_INFO_STREAM("input image size " << input->width << " x " << input->height << "(=" << input->width * input->height << ")");
-    ROS_INFO_STREAM("output image size " << rangeImage.width << " x " << rangeImage.height << "(=" << rangeImage.width * rangeImage.height << ")");
-    ROS_DEBUG_STREAM(rangeImage);
+    JSK_ROS_INFO_STREAM("input image size " << input->width << " x " << input->height << "(=" << input->width * input->height << ")");
+    JSK_ROS_INFO_STREAM("output image size " << rangeImage.width << " x " << rangeImage.height << "(=" << rangeImage.width * rangeImage.height << ")");
+    JSK_ROS_DEBUG_STREAM(rangeImage);
 
     sensor_msgs::PointCloud2 out;
     pcl::toROSMsg(rangeImage, out);

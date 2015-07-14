@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -72,9 +72,9 @@ namespace jsk_pcl_ros
     // Publishers
     ////////////////////////////////////////////////////////
     filtered_box_pub_
-      = advertise<BoundingBoxArray>(*pnh_, "output_box", 1);
+      = advertise<jsk_recognition_msgs::BoundingBoxArray>(*pnh_, "output_box", 1);
     filtered_indices_pub_
-      = advertise<ClusterPointIndices>(*pnh_, "output_indices", 1);
+      = advertise<jsk_recognition_msgs::ClusterPointIndices>(*pnh_, "output_indices", 1);
 
     
   }
@@ -95,26 +95,26 @@ namespace jsk_pcl_ros
   }
 
   void BoundingBoxFilter::filter(
-    const BoundingBoxArray::ConstPtr& box_array_msg,
-    const ClusterPointIndices::ConstPtr& indices_msg)
+    const jsk_recognition_msgs::BoundingBoxArray::ConstPtr& box_array_msg,
+    const jsk_recognition_msgs::ClusterPointIndices::ConstPtr& indices_msg)
   {
     boost::mutex::scoped_lock lock(mutex_);
 
     if (box_array_msg->boxes.size() != indices_msg->cluster_indices.size()) {
-      NODELET_ERROR(
+      JSK_NODELET_ERROR(
         "the size of message ~input_box and ~input_indices are different");
       return;
     }
     vital_checker_->poke();
 
-    BoundingBoxArray filtered_box_array;
-    ClusterPointIndices filtered_indices;
+    jsk_recognition_msgs::BoundingBoxArray filtered_box_array;
+    jsk_recognition_msgs::ClusterPointIndices filtered_indices;
     filtered_box_array.header = box_array_msg->header;
     filtered_indices.header = indices_msg->header;
     int remove_count = 0;
     int pass_count = 0;
     for (size_t i = 0; i < box_array_msg->boxes.size(); i++) {
-      BoundingBox box = box_array_msg->boxes[i];
+      jsk_recognition_msgs::BoundingBox box = box_array_msg->boxes[i];
       bool filterp = false;
       if (!filter_limit_negative_) {
         if (use_x_dimension_) {

@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -59,18 +59,18 @@ namespace jsk_pcl_ros
         &PlaneRejector::updateDiagnosticsPlaneRejector,
         this, _1));
     if (!pnh_->getParam("processing_frame_id", processing_frame_id_)) {
-      NODELET_FATAL("You need to specify ~processing_frame_id");
+      JSK_NODELET_FATAL("You need to specify ~processing_frame_id");
       return;
     }
 
     std::vector<double> reference_axis;
     if (!jsk_topic_tools::readVectorParameter(
           *pnh_, "reference_axis", reference_axis)) {
-      NODELET_FATAL("you need to specify ~reference_axis");
+      JSK_NODELET_FATAL("you need to specify ~reference_axis");
       return;
     }
     else if (reference_axis.size() != 3){
-      NODELET_FATAL("~reference_axis is not 3 length vector");
+      JSK_NODELET_FATAL("~reference_axis is not 3 length vector");
       return;
     }
     else {
@@ -83,9 +83,9 @@ namespace jsk_pcl_ros
       boost::bind (&PlaneRejector::configCallback, this, _1, _2);
     srv_->setCallback (f);
     
-    polygons_pub_ = advertise<jsk_pcl_ros::PolygonArray>(
+    polygons_pub_ = advertise<jsk_recognition_msgs::PolygonArray>(
       *pnh_, "output_polygons", 1);
-    coefficients_pub_ = advertise<jsk_pcl_ros::ModelCoefficientsArray>(
+    coefficients_pub_ = advertise<jsk_recognition_msgs::ModelCoefficientsArray>(
       *pnh_, "output_coefficients", 1);
 
     diagnostics_timer_ = pnh_->createTimer(
@@ -156,13 +156,13 @@ namespace jsk_pcl_ros
   }
   
   void PlaneRejector::reject(
-    const PolygonArray::ConstPtr& polygons,
-    const ModelCoefficientsArray::ConstPtr& coefficients)
+    const jsk_recognition_msgs::PolygonArray::ConstPtr& polygons,
+    const jsk_recognition_msgs::ModelCoefficientsArray::ConstPtr& coefficients)
   {
     boost::mutex::scoped_lock lock(mutex_);
     vital_checker_->poke();
-    jsk_pcl_ros::PolygonArray result_polygons;
-    jsk_pcl_ros::ModelCoefficientsArray result_coefficients;
+    jsk_recognition_msgs::PolygonArray result_polygons;
+    jsk_recognition_msgs::ModelCoefficientsArray result_coefficients;
     result_polygons.header = polygons->header;
     result_coefficients.header = coefficients->header;
     input_plane_counter_.add(polygons->polygons.size());

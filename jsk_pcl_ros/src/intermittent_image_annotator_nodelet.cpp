@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -58,7 +58,7 @@ namespace jsk_pcl_ros
       "output/direction", 1);
     pub_cloud_ = pnh_->advertise<sensor_msgs::PointCloud2>(
       "output/cloud", 1);
-    pub_roi_ = pnh_->advertise<jsk_pcl_ros::PosedCameraInfo>(
+    pub_roi_ = pnh_->advertise<jsk_recognition_msgs::PosedCameraInfo>(
       "output/roi", 1);
     pub_marker_ = pnh_->advertise<visualization_msgs::Marker>(
       "output/marker", 1);
@@ -118,12 +118,12 @@ namespace jsk_pcl_ros
     int x0_index = x0 / width;
     int x1_index = x1 / width;
     if (x0_index != x1_index) {
-      NODELET_WARN("malformed rectangle");
+      JSK_NODELET_WARN("malformed rectangle");
       return;
     }
     else {
       int image_index = x0_index;
-      NODELET_INFO("image index: %d", image_index);
+      JSK_NODELET_INFO("image index: %d", image_index);
       SnapshotInformation::Ptr info = snapshot_buffer_[image_index];
       // local point
       int width_offset = width * image_index;
@@ -137,14 +137,14 @@ namespace jsk_pcl_ros
       Eigen::Vector3d ray(mid_3d.x, mid_3d.y, mid_3d.z); // ray is camera local
       ray = ray / ray.norm();
       Eigen::Vector3d ray_global = pose.rotation() * ray;
-      NODELET_INFO("ray: [%f, %f, %f]", ray_global[0], ray_global[1], ray_global[2]);
+      JSK_NODELET_INFO("ray: [%f, %f, %f]", ray_global[0], ray_global[1], ray_global[2]);
       
       Eigen::Vector3d z = pose.rotation() * Eigen::Vector3d::UnitZ();
-      NODELET_INFO("z: [%f, %f, %f]", z[0], z[1], z[2]);
+      JSK_NODELET_INFO("z: [%f, %f, %f]", z[0], z[1], z[2]);
       Eigen::Vector3d original_pos = pose.translation();
       Eigen::Quaterniond q;
       q.setFromTwoVectors(z, ray_global);
-      NODELET_INFO("q: [%f, %f, %f, %f]", q.x(), q.y(), q.z(), q.w());
+      JSK_NODELET_INFO("q: [%f, %f, %f, %f]", q.x(), q.y(), q.z(), q.w());
       Eigen::Affine3d output_pose = pose.rotate(q);
       output_pose.translation() = original_pos;
       geometry_msgs::PoseStamped ros_pose;
@@ -154,7 +154,7 @@ namespace jsk_pcl_ros
       pub_pose_.publish(ros_pose);
 
       // publish ROI
-      jsk_pcl_ros::PosedCameraInfo camera_info;
+      jsk_recognition_msgs::PosedCameraInfo camera_info;
       camera_info.header.stamp = latest_image_msg_->header.stamp;
       camera_info.header.frame_id = fixed_frame_id_;
       camera_info.camera_info
@@ -294,7 +294,7 @@ namespace jsk_pcl_ros
       if ((now - last_publish_time_).toSec() > 1.0 / rate_) {
         cv::Mat concatenated_image;
         std::vector<cv::Mat> images;
-        //ROS_INFO("%lu images", snapshot_buffer_.size());
+        //JSK_ROS_INFO("%lu images", snapshot_buffer_.size());
         for (size_t i = 0; i < snapshot_buffer_.size(); i++) {
           images.push_back(snapshot_buffer_[i]->image_);
         }
@@ -308,84 +308,103 @@ namespace jsk_pcl_ros
     }
     
   }
+
+  void IntermittentImageAnnotator::waitForNextImage()
+  {
+    ros::Time now = ros::Time::now();
+    ros::Rate r(10);
+    while (ros::ok()) {
+      {
+        boost::mutex::scoped_lock lock(mutex_);
+        if (latest_image_msg_ && latest_image_msg_->header.stamp > now) {
+          return;
+        }
+      }
+      r.sleep();
+    }
+  }
  
- bool IntermittentImageAnnotator::shutterCallback(
+  bool IntermittentImageAnnotator::shutterCallback(
     std_srvs::Empty::Request& req,
     std_srvs::Empty::Response& res)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-    if (latest_camera_info_msg_) {
-      SnapshotInformation::Ptr
-        info (new SnapshotInformation());
-      // resolve tf
-      try {
-        if (listener_->waitForTransform(
-              fixed_frame_id_,
-              latest_camera_info_msg_->header.frame_id,
-              latest_camera_info_msg_->header.stamp,
-              ros::Duration(1.0))) {
-          tf::StampedTransform transform;
-          listener_->lookupTransform(fixed_frame_id_,
-                                     latest_camera_info_msg_->header.frame_id,
-                                     latest_camera_info_msg_->header.stamp,
-                                     transform);
-          cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(
-            latest_image_msg_,
-            sensor_msgs::image_encodings::BGR8);
-          Eigen::Affine3d eigen_transform;
-          image_geometry::PinholeCameraModel camera;
-          camera.fromCameraInfo(latest_camera_info_msg_);
-          tf::transformTFToEigen(transform, eigen_transform);
-          info->camera_pose_ = eigen_transform;
-          info->camera_ = camera;
-          info->image_ = cv_ptr->image;
-          if (store_pointcloud_) {
-            // use pointcloud
-            if (!latest_cloud_msg_) {
-              NODELET_ERROR("no pointcloud is available");
-              return false;
-            }
-            // transform pointcloud to fixed frame
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr 
+    
+    waitForNextImage();
+    {
+      boost::mutex::scoped_lock lock(mutex_);
+      if (latest_camera_info_msg_) {
+        SnapshotInformation::Ptr
+          info (new SnapshotInformation());
+        // resolve tf
+        try {
+          if (listener_->waitForTransform(
+                fixed_frame_id_,
+                latest_camera_info_msg_->header.frame_id,
+                latest_camera_info_msg_->header.stamp,
+                ros::Duration(1.0))) {
+            tf::StampedTransform transform;
+            listener_->lookupTransform(fixed_frame_id_,
+                                       latest_camera_info_msg_->header.frame_id,
+                                       latest_camera_info_msg_->header.stamp,
+                                       transform);
+            cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(
+              latest_image_msg_,
+              sensor_msgs::image_encodings::BGR8);
+            Eigen::Affine3d eigen_transform;
+            image_geometry::PinholeCameraModel camera;
+            camera.fromCameraInfo(latest_camera_info_msg_);
+            tf::transformTFToEigen(transform, eigen_transform);
+            info->camera_pose_ = eigen_transform;
+            info->camera_ = camera;
+            info->image_ = cv_ptr->image;
+            if (store_pointcloud_) {
+              // use pointcloud
+              if (!latest_cloud_msg_) {
+                JSK_NODELET_ERROR("no pointcloud is available");
+                return false;
+              }
+              // transform pointcloud to fixed frame
+              pcl::PointCloud<pcl::PointXYZRGB>::Ptr 
                 nontransformed_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr 
+              pcl::PointCloud<pcl::PointXYZRGB>::Ptr 
                 transformed_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-            pcl::fromROSMsg(*latest_cloud_msg_, *nontransformed_cloud);
-            if (pcl_ros::transformPointCloud(fixed_frame_id_, 
-                                             *nontransformed_cloud,
-                                             *transformed_cloud,
-                                             *listener_)) {
-              info->cloud_ = transformed_cloud;
+              pcl::fromROSMsg(*latest_cloud_msg_, *nontransformed_cloud);
+              if (pcl_ros::transformPointCloud(fixed_frame_id_, 
+                                               *nontransformed_cloud,
+                                               *transformed_cloud,
+                                               *listener_)) {
+                info->cloud_ = transformed_cloud;
+              }
+              else {
+                JSK_NODELET_ERROR("failed to transform pointcloud");
+                return false;
+              }
             }
-            else {
-              NODELET_ERROR("failed to transform pointcloud");
-              return false;
-            }
+            snapshot_buffer_.push_back(info);
+            return true;
           }
-          snapshot_buffer_.push_back(info);
-          return true;
+          else {
+            JSK_NODELET_ERROR("failed to resolve tf from %s to %s",
+                          fixed_frame_id_.c_str(),
+                          latest_camera_info_msg_->header.frame_id.c_str());
+            return false;
+          }
         }
-        else {
-          NODELET_ERROR("failed to resolve tf from %s to %s",
-                        fixed_frame_id_.c_str(),
-                        latest_camera_info_msg_->header.frame_id.c_str());
+        catch (tf2::ConnectivityException &e)
+        {
+          JSK_NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
+          return false;
+        }
+        catch (tf2::InvalidArgumentException &e)
+        {
+          JSK_NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
           return false;
         }
       }
-      catch (tf2::ConnectivityException &e)
-      {
-        NODELET_ERROR("Transform error: %s", e.what());
+      else {
+        JSK_NODELET_ERROR("not yet camera message is available");
         return false;
       }
-      catch (tf2::InvalidArgumentException &e)
-      {
-        NODELET_ERROR("Transform error: %s", e.what());
-        return false;
-      }
-    }
-    else {
-      NODELET_ERROR("not yet camera message is available");
-      return false;
     }
   }
 
@@ -395,6 +414,7 @@ namespace jsk_pcl_ros
   {
     boost::mutex::scoped_lock lock(mutex_);
     snapshot_buffer_.clear();
+    return true;
   }
 
   bool IntermittentImageAnnotator::requestCallback(
@@ -404,13 +424,13 @@ namespace jsk_pcl_ros
     // concatenate images
     boost::mutex::scoped_lock lock(mutex_);
     if (snapshot_buffer_.size() == 0) {
-      NODELET_ERROR("no image is stored");
+      JSK_NODELET_ERROR("no image is stored");
       return false;
     }
     else {
       cv::Mat concatenated_image;
       std::vector<cv::Mat> images;
-      ROS_INFO("%lu images", snapshot_buffer_.size());
+      JSK_ROS_INFO("%lu images", snapshot_buffer_.size());
       for (size_t i = 0; i < snapshot_buffer_.size(); i++) {
         images.push_back(snapshot_buffer_[i]->image_);
       }

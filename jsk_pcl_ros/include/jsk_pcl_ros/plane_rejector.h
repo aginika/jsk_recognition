@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -51,8 +51,8 @@
 // pcl
 #include <pcl_ros/pcl_nodelet.h>
 
-#include <jsk_pcl_ros/PolygonArray.h>
-#include <jsk_pcl_ros/ModelCoefficientsArray.h>
+#include <jsk_recognition_msgs/PolygonArray.h>
+#include <jsk_recognition_msgs/ModelCoefficientsArray.h>
 #include "jsk_pcl_ros/PlaneRejectorConfig.h"
 
 #include "jsk_pcl_ros/pcl_conversion_util.h"
@@ -71,13 +71,13 @@ namespace jsk_pcl_ros
   class PlaneRejector: public jsk_topic_tools::ConnectionBasedNodelet
   {
   public:
-    typedef message_filters::sync_policies::ExactTime< jsk_pcl_ros::PolygonArray,
-                                                       jsk_pcl_ros::ModelCoefficientsArray > SyncPolicy;
+    typedef message_filters::sync_policies::ExactTime< jsk_recognition_msgs::PolygonArray,
+                                                       jsk_recognition_msgs::ModelCoefficientsArray > SyncPolicy;
     typedef jsk_pcl_ros::PlaneRejectorConfig Config;
   protected:
     virtual void onInit();
-    virtual void reject(const jsk_pcl_ros::PolygonArray::ConstPtr& polygons,
-                        const jsk_pcl_ros::ModelCoefficientsArray::ConstPtr& coefficients);
+    virtual void reject(const jsk_recognition_msgs::PolygonArray::ConstPtr& polygons,
+                        const jsk_recognition_msgs::ModelCoefficientsArray::ConstPtr& coefficients);
     virtual void configCallback (Config &config, uint32_t level);
 
     
@@ -87,8 +87,8 @@ namespace jsk_pcl_ros
     virtual void subscribe();
     virtual void unsubscribe();
     
-    message_filters::Subscriber<jsk_pcl_ros::PolygonArray> sub_polygons_;
-    message_filters::Subscriber<jsk_pcl_ros::ModelCoefficientsArray> sub_coefficients_;
+    message_filters::Subscriber<jsk_recognition_msgs::PolygonArray> sub_polygons_;
+    message_filters::Subscriber<jsk_recognition_msgs::ModelCoefficientsArray> sub_coefficients_;
     boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> >sync_;
     
     bool use_tf2_;

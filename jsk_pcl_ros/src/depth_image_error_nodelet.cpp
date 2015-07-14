@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -43,7 +43,7 @@ namespace jsk_pcl_ros
   void DepthImageError::onInit()
   {
     ConnectionBasedNodelet::onInit();
-    depth_error_publisher_ = advertise<DepthErrorResult>(*pnh_, "output", 1);
+    depth_error_publisher_ = advertise<jsk_recognition_msgs::DepthErrorResult>(*pnh_, "output", 1);
   }
 
   void DepthImageError::subscribe()
@@ -73,11 +73,11 @@ namespace jsk_pcl_ros
     cv_ptr = cv_bridge::toCvCopy(depth_image, sensor_msgs::image_encodings::TYPE_32FC1);
     cv::Mat cv_depth_image = cv_ptr->image;
     double depth_from_depth_sensor = cv_depth_image.at<float>((int)uv_point->point.y, (int)uv_point->point.x);
-    NODELET_INFO("timestamp diff is %f", (depth_image->header.stamp - uv_point->header.stamp).toSec());
-    NODELET_INFO("(u, v) = (%d, %d)", (int)uv_point->point.x, (int)uv_point->point.y);
-    NODELET_INFO("(z, d) = (%f, %f)", uv_point->point.z, depth_from_depth_sensor);
+    JSK_NODELET_INFO("timestamp diff is %f", (depth_image->header.stamp - uv_point->header.stamp).toSec());
+    JSK_NODELET_INFO("(u, v) = (%d, %d)", (int)uv_point->point.x, (int)uv_point->point.y);
+    JSK_NODELET_INFO("(z, d) = (%f, %f)", uv_point->point.z, depth_from_depth_sensor);
     if (! isnan(depth_from_depth_sensor)) {
-      jsk_pcl_ros::DepthErrorResult result;
+      jsk_recognition_msgs::DepthErrorResult result;
       result.header.frame_id = depth_image->header.frame_id;
       result.header.stamp = depth_image->header.stamp;
       result.u = (int)uv_point->point.x;

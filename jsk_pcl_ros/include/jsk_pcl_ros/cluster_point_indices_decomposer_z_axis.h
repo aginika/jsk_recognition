@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -39,7 +39,7 @@
 #include <ros/ros.h>
 #include <ros/names.h>
 
-#include "jsk_pcl_ros/ClusterPointIndices.h"
+#include "jsk_recognition_msgs/ClusterPointIndices.h"
 #include "sensor_msgs/PointCloud2.h"
 
 #include "jsk_pcl_ros/cluster_point_indices_decomposer.h"

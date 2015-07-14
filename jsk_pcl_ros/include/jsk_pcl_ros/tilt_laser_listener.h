@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -39,8 +39,9 @@
 
 #include <jsk_topic_tools/diagnostic_nodelet.h>
 #include <sensor_msgs/JointState.h>
-#include <jsk_pcl_ros/TimeRange.h>
+#include <jsk_recognition_msgs/TimeRange.h>
 #include "jsk_pcl_ros/line_segment_collector.h"
+#include <std_srvs/Empty.h>
 
 namespace jsk_pcl_ros
 {
@@ -72,9 +73,9 @@ namespace jsk_pcl_ros
     virtual void onInit();
     virtual void subscribe();
     virtual void unsubscribe();
-    virtual void jointCallback(const sensor_msgs::JointState::ConstPtr& msg);
     virtual void updateDiagnostic(
       diagnostic_updater::DiagnosticStatusWrapper &stat);
+    virtual void jointCallback(const sensor_msgs::JointState::ConstPtr& msg);
     virtual void processTiltHalfUp(const ros::Time& stamp, const double& value);
     virtual void processTiltHalfDown(const ros::Time& stamp, const double& value);
     virtual void processTilt(const ros::Time& stamp, const double& value);
@@ -84,13 +85,25 @@ namespace jsk_pcl_ros
     virtual void publishTimeRange(const ros::Time& stamp,
                                   const ros::Time& start,
                                   const ros::Time& end);
+    virtual bool clearCacheCallback(
+      std_srvs::Empty::Request& req,
+      std_srvs::Empty::Response& res);
+    virtual void cloudCallback(
+      const sensor_msgs::PointCloud2::ConstPtr& msg);
+    virtual void getPointCloudFromLocalBuffer(
+      const std::vector<sensor_msgs::PointCloud2::ConstPtr>& target_clouds,
+      sensor_msgs::PointCloud2& output_cloud);
     ////////////////////////////////////////////////////////
     // ROS variables
     ////////////////////////////////////////////////////////
     ros::Subscriber sub_;
+    ros::Subscriber sub_cloud_;
     ros::Publisher trigger_pub_;
     ros::Publisher cloud_pub_;
+    ros::ServiceServer clear_cache_service_;
     ros::ServiceClient assemble_cloud_srv_;
+    jsk_topic_tools::VitalChecker::Ptr cloud_vital_checker_;
+
     ////////////////////////////////////////////////////////
     // parameters
     ////////////////////////////////////////////////////////
@@ -98,10 +111,16 @@ namespace jsk_pcl_ros
     std::string joint_name_;
     double prev_angle_;
     double prev_velocity_;
+    double overwrap_angle_;
     ros::Time start_time_;
     bool use_laser_assembler_;
-    
+    bool not_use_laser_assembler_service_;
+    boost::mutex mutex_;
+    boost::mutex cloud_mutex_;
     TimeStampedVector<StampedJointAngle::Ptr> buffer_;
+    TimeStampedVector<sensor_msgs::PointCloud2::ConstPtr> cloud_buffer_;
+    int skip_number_;
+    int skip_counter_;
   private:
     
   };

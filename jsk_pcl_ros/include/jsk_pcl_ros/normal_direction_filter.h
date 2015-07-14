@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -74,8 +74,6 @@ namespace jsk_pcl_ros
       pcl::PointIndices& indices);
     virtual void subscribe();
     virtual void unsubscribe();
-    virtual void updateDiagnostic(
-      diagnostic_updater::DiagnosticStatusWrapper &stat);
     virtual void configCallback (Config &config, uint32_t level);
     ////////////////////////////////////////////////////////
     // ROS variables
@@ -96,7 +94,7 @@ namespace jsk_pcl_ros
     double angle_offset_;
     tf::TransformListener* tf_listener_;
     bool use_imu_;
-    
+    int queue_size_;
   private:
     
   };

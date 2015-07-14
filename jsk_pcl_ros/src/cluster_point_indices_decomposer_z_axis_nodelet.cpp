@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -72,7 +72,7 @@ namespace jsk_pcl_ros
           minimum_index = j;
         }
       }
-      // ROS_INFO("%lu => %lu", i, minimum_index);
+      // JSK_ROS_INFO("%lu => %lu", i, minimum_index);
       output_array[i] = indices_array[minimum_index];
       z_values[minimum_index] = DBL_MAX;
     }

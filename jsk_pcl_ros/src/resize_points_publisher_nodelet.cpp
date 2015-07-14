@@ -16,17 +16,27 @@
 #include "jsk_pcl_ros/pcl_conversion_util.h"
 #include <jsk_topic_tools/connection_based_nodelet.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <jsk_pcl_ros/ResizePointsPublisherConfig.h>
+
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+
 namespace jsk_pcl_ros
 {
   class ResizePointsPublisher : public jsk_topic_tools::ConnectionBasedNodelet
   {
     typedef message_filters::sync_policies::ExactTime<sensor_msgs::PointCloud2,
                                                       PCLIndicesMsg> SyncPolicy;
+    typedef jsk_pcl_ros::ResizePointsPublisherConfig Config;
 
   private:
     int step_x_, step_y_;
     message_filters::Subscriber<sensor_msgs::PointCloud2> sub_input_;
     message_filters::Subscriber<PCLIndicesMsg> sub_indices_;
+    boost::shared_ptr <dynamic_reconfigure::Server<Config> >  srv_;
+    ros::Subscriber sub_;
+    ros::Subscriber resizedmask_sub_;
     boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> >sync_;
     ros::Publisher pub_;
     bool not_use_rgb_;
@@ -35,20 +45,53 @@ namespace jsk_pcl_ros
     void onInit () {
       ConnectionBasedNodelet::onInit();
       pnh_->param("use_indices", use_indices_, false);
-      pnh_->param("step_x", step_x_, 2);
-      NODELET_INFO("step_x : %d", step_x_);
-      pnh_->param("step_y", step_y_, 2);
-      NODELET_INFO("step_y : %d", step_y_);
       pnh_->param("not_use_rgb", not_use_rgb_, false);
+      srv_ = boost::make_shared <dynamic_reconfigure::Server<Config> > (*pnh_);
+      dynamic_reconfigure::Server<Config>::CallbackType f =
+        boost::bind (
+                     &ResizePointsPublisher::configCallback, this, _1, _2);
+      srv_->setCallback (f);
       pub_ = advertise<sensor_msgs::PointCloud2>(*pnh_, "output", 1);
+      resizedmask_sub_ = pnh_->subscribe("input/mask", 1, &ResizePointsPublisher::resizedmaskCallback, this);
+    }
+
+    void configCallback(Config &config, uint32_t level) {
+      boost::mutex::scoped_lock lock(mutex_);
+      step_x_ = config.step_x;
+      step_y_ = config.step_y;
+    }
+
+    void resizedmaskCallback (const sensor_msgs::Image::ConstPtr& msg) {
+      boost::mutex::scoped_lock lock(mutex_);
+      cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy
+        (msg, sensor_msgs::image_encodings::MONO8);
+      cv::Mat mask = cv_ptr->image;
+      int maskwidth = mask.cols;
+      int maskheight = mask.rows;
+      int cnt = 0;
+      for (size_t j = 0; j < maskheight; j++){
+        for (size_t i = 0; i < maskwidth; i++){
+          if (mask.at<uchar>(j, i) != 0){
+            cnt++;
+          }
+        }
+      }
+      int surface_per = ((double) cnt) / (maskwidth * maskheight) * 100;
+      // step_x_ = surface_per /10;
+      step_x_ = sqrt(surface_per);
+      if (step_x_ < 1) {
+        step_x_ = 1;
+      }
+      step_y_ = step_x_;
     }
 
     void subscribe()
     {
-      sub_input_.subscribe(*pnh_, "input", 1);
+      
       if (use_indices_) {
-        sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(10);
+        sub_input_.subscribe(*pnh_, "input", 1);
         sub_indices_.subscribe(*pnh_, "indices", 1);
+        sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(10);
         sync_->connectInput(sub_input_, sub_indices_);
         if (!not_use_rgb_) {
           sync_->registerCallback(boost::bind(&ResizePointsPublisher::filter<pcl::PointXYZRGB>, this, _1, _2));
@@ -59,19 +102,26 @@ namespace jsk_pcl_ros
       }
       else {
         if (!not_use_rgb_) {
-          sub_input_.registerCallback(&ResizePointsPublisher::filter<pcl::PointXYZRGB>, this);
+          sub_ = pnh_->subscribe(
+            "input", 1,
+            &ResizePointsPublisher::filter<pcl::PointXYZRGB>, this);
         }
         else {
-          sub_input_.registerCallback(&ResizePointsPublisher::filter<pcl::PointXYZ>, this);
+          sub_ = pnh_->subscribe(
+            "input", 1,
+            &ResizePointsPublisher::filter<pcl::PointXYZ>, this);
         }
       }
     }
 
     void unsubscribe()
     {
-      sub_input_.unsubscribe();
       if (use_indices_) {
+        sub_input_.unsubscribe();
         sub_indices_.unsubscribe();
+      }
+      else {
+        sub_.shutdown();
       }
     }
     
@@ -144,10 +194,14 @@ namespace jsk_pcl_ros
         ros_out.row_step = ros_out.point_step * ros_out.width;
         ros_out.is_dense = input->is_dense;
 #if DEBUG
-        NODELET_INFO("%dx%d (%d %d)(%d %d) -> %dx%d %d", width,height, ox, oy, sx, sy,
+        JSK_NODELET_INFO("%dx%d (%d %d)(%d %d) -> %dx%d %d", width,height, ox, oy, sx, sy,
                  ros_out.width, ros_out.height, ex_indices.size());
 #endif
         pub_.publish(ros_out);
+        JSK_NODELET_INFO("%s:: input header stamp is [%f]", getName().c_str(),
+                     input->header.stamp.toSec());
+        JSK_NODELET_INFO("%s:: output header stamp is [%f]", getName().c_str(),
+                     ros_out.header.stamp.toSec());
       }
       
     }

@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -45,9 +45,9 @@
 #include <message_filters/synchronizer.h>
 #include <jsk_topic_tools/diagnostic_nodelet.h>
 #include "jsk_pcl_ros/geo_util.h"
-#include "jsk_pcl_ros/PolygonArray.h"
-#include "jsk_pcl_ros/ClusterPointIndices.h"
-#include "jsk_pcl_ros/ModelCoefficientsArray.h"
+#include "jsk_recognition_msgs/PolygonArray.h"
+#include "jsk_recognition_msgs/ClusterPointIndices.h"
+#include "jsk_recognition_msgs/ModelCoefficientsArray.h"
 
 namespace jsk_pcl_ros
 {
@@ -75,8 +75,6 @@ namespace jsk_pcl_ros
       const sensor_msgs::PointCloud2::ConstPtr& msg,
       const sensor_msgs::PointCloud2::ConstPtr& normal_msg);
     virtual void configCallback (Config &config, uint32_t level);
-    virtual void updateDiagnostic(
-      diagnostic_updater::DiagnosticStatusWrapper &stat);
     ////////////////////////////////////////////////////////
     // static methods
     ////////////////////////////////////////////////////////

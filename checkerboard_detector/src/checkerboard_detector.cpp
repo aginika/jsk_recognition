@@ -1,5 +1,6 @@
+// -*- mode: c++; indent-tabs-mode: nil; c-basic-offset: 4; -*-
 // Software License Agreement (BSD License)
-// Copyright (c) 2008, Willow Garage, Inc.
+// Copyright (c) 2008, JSK Lab, Inc.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //   * Redistributions of source code must retain the above copyright notice,
@@ -45,8 +46,7 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "math.h"
 #include "geometry_msgs/PolygonStamped.h"
-#include "jsk_pcl_ros/PolygonArray.h"
-#include "jsk_pcl_ros/pcl_conversion_util.h"
+#include "jsk_recognition_msgs/PolygonArray.h"
 #include "eigen_conversions/eigen_msg.h"
 #include <sys/timeb.h>    // ftime(), struct timeb
 #include <sys/time.h>
@@ -85,7 +85,8 @@ public:
     ros::Publisher _pubCornerPoint;
     ros::Publisher _pubPolygonArray;
     ros::ServiceServer _srvDetect;
-
+    int message_throttle_;
+    int message_throttle_counter_;
     string frame_id; // tf frame id
     bool invert_color;
     int display, verbose, maxboard;
@@ -96,6 +97,7 @@ public:
     boost::mutex mutexcalib;
     ros::NodeHandle _node;
     int dimx, dimy;
+    bool use_P;
     double fRectSize[2];
 
     //////////////////////////////////////////////////////////////////////////////
@@ -106,6 +108,8 @@ public:
         _node.param("verbose", verbose, 1);
         _node.param("maxboard", maxboard, -1);
         _node.param("invert_color", invert_color, false);
+        _node.param("use_P", use_P, false);
+        _node.param("message_throttle", message_throttle_, 1);
         char str[32];
         int index = 0;
 
@@ -207,16 +211,26 @@ public:
         }
 
         lasttime = ros::Time::now();
-
-        ros::SubscriberStatusCallback connect_cb = boost::bind( &CheckerboardDetector::connectCb, this);
-        _pubDetection =
-          _node.advertise<posedetection_msgs::ObjectDetection> ("ObjectDetection", 1,
-                                                                connect_cb, connect_cb);
-        _pubPoseStamped =
-          _node.advertise<geometry_msgs::PoseStamped> ("objectdetection_pose", 1,
-                                                       connect_cb, connect_cb);
-        _pubCornerPoint = _node.advertise<geometry_msgs::PointStamped>("corner_point", 1, connect_cb, connect_cb);
-        _pubPolygonArray = _node.advertise<jsk_pcl_ros::PolygonArray>("polygons", 1, connect_cb, connect_cb);
+        if (!display) {
+            ros::SubscriberStatusCallback connect_cb = boost::bind( &CheckerboardDetector::connectCb, this);
+            _pubDetection =
+                _node.advertise<posedetection_msgs::ObjectDetection> ("ObjectDetection", 1,
+                                                                      connect_cb, connect_cb);
+            _pubPoseStamped =
+                _node.advertise<geometry_msgs::PoseStamped> ("objectdetection_pose", 1,
+                                                             connect_cb, connect_cb);
+            _pubCornerPoint = _node.advertise<geometry_msgs::PointStamped>("corner_point", 1, connect_cb, connect_cb);
+            _pubPolygonArray = _node.advertise<jsk_recognition_msgs::PolygonArray>("polygons", 1, connect_cb, connect_cb);
+        }
+        else {
+            _pubDetection =
+                _node.advertise<posedetection_msgs::ObjectDetection> ("ObjectDetection", 1);
+            _pubPoseStamped =
+                _node.advertise<geometry_msgs::PoseStamped> ("objectdetection_pose", 1);
+            _pubCornerPoint = _node.advertise<geometry_msgs::PointStamped>("corner_point", 1);
+            _pubPolygonArray = _node.advertise<jsk_recognition_msgs::PolygonArray>("polygons", 1);
+            subscribe();
+        }
         //this->camInfoSubscriber = _node.subscribe("camera_info", 1, &CheckerboardDetector::caminfo_cb, this);
         //this->imageSubscriber = _node.subscribe("image",1, &CheckerboardDetector::image_cb, this);
         //this->camInfoSubscriber2 = _node.subscribe("CameraInfo", 1, &CheckerboardDetector::caminfo_cb2, this);
@@ -250,7 +264,7 @@ public:
     
     void publishPolygonArray(const posedetection_msgs::ObjectDetection& obj)
     {
-        jsk_pcl_ros::PolygonArray polygon_array;
+        jsk_recognition_msgs::PolygonArray polygon_array;
         polygon_array.header = obj.header;
         for (size_t i = 0; i < obj.objects.size(); i++) {
             geometry_msgs::Pose pose = obj.objects[i].pose;
@@ -265,10 +279,10 @@ public:
             Eigen::Vector3d C_global = affine * C_local;
             Eigen::Vector3d D_global = affine * D_local;
             geometry_msgs::Point32 a, b, c, d;
-            jsk_pcl_ros::pointFromVectorToXYZ<Eigen::Vector3d, geometry_msgs::Point32>(A_global, a);
-            jsk_pcl_ros::pointFromVectorToXYZ<Eigen::Vector3d, geometry_msgs::Point32>(B_global, b);
-            jsk_pcl_ros::pointFromVectorToXYZ<Eigen::Vector3d, geometry_msgs::Point32>(C_global, c);
-            jsk_pcl_ros::pointFromVectorToXYZ<Eigen::Vector3d, geometry_msgs::Point32>(D_global, d);
+            a.x = A_global[0]; a.y = A_global[1]; a.z = A_global[2];
+            b.x = B_global[0]; b.y = B_global[1]; b.z = B_global[2];
+            c.x = C_global[0]; c.y = C_global[1]; c.z = C_global[2];
+            d.x = D_global[0]; d.y = D_global[1]; d.z = D_global[2];
             geometry_msgs::PolygonStamped polygon;
             polygon.header = obj.header;
             polygon.polygon.points.push_back(a);
@@ -284,15 +298,19 @@ public:
     {
         ROS_WARN("The topic Image has been deprecated.  Please change your launch file to use image instead.");
         boost::mutex::scoped_lock lock(this->mutexcalib);
-        if( Detect(_objdetmsg,*msg,this->_camInfoMsg) ) {
-            if (_objdetmsg.objects.size() > 0) {
-                geometry_msgs::PoseStamped pose;
-                pose.header = _objdetmsg.header;
-                pose.pose = _objdetmsg.objects[0].pose;
-                _pubPoseStamped.publish(pose);
+        ++message_throttle_counter_;
+        if (message_throttle_counter_ % message_throttle_ == 0) {
+            message_throttle_counter_ = 0;
+            if( Detect(_objdetmsg,*msg,this->_camInfoMsg) ) {
+                if (_objdetmsg.objects.size() > 0) {
+                    geometry_msgs::PoseStamped pose;
+                    pose.header = _objdetmsg.header;
+                    pose.pose = _objdetmsg.objects[0].pose;
+                    _pubPoseStamped.publish(pose);
+                }
+                _pubDetection.publish(_objdetmsg);
+                publishPolygonArray(_objdetmsg);
             }
-            _pubDetection.publish(_objdetmsg);
-            publishPolygonArray(_objdetmsg);
         }
     }
 
@@ -301,15 +319,19 @@ public:
     void image_cb(const sensor_msgs::ImageConstPtr &msg)
     {
         boost::mutex::scoped_lock lock(this->mutexcalib);
-        if( Detect(_objdetmsg,*msg,this->_camInfoMsg) ) {
-            if (_objdetmsg.objects.size() > 0) {
-                geometry_msgs::PoseStamped pose;
-                pose.header = _objdetmsg.header;
-                pose.pose = _objdetmsg.objects[0].pose;
-                _pubPoseStamped.publish(pose);
+        ++message_throttle_counter_;
+        if (message_throttle_counter_ % message_throttle_ == 0) {
+            message_throttle_counter_ = 0;
+            if( Detect(_objdetmsg,*msg,this->_camInfoMsg) ) {
+                if (_objdetmsg.objects.size() > 0) {
+                    geometry_msgs::PoseStamped pose;
+                    pose.header = _objdetmsg.header;
+                    pose.pose = _objdetmsg.objects[0].pose;
+                    _pubPoseStamped.publish(pose);
+                }
+                _pubDetection.publish(_objdetmsg);
+                publishPolygonArray(_objdetmsg);
             }
-            _pubDetection.publish(_objdetmsg);
-            publishPolygonArray(_objdetmsg);
         }
     }
 
@@ -319,28 +341,39 @@ public:
         return result;
     }
 
-    //
+
+    void subscribe( )
+    {
+        if ( camInfoSubscriber == NULL )
+            camInfoSubscriber = _node.subscribe("camera_info", 1, &CheckerboardDetector::caminfo_cb, this);
+        if ( imageSubscriber == NULL )
+            imageSubscriber = _node.subscribe("image", 1, &CheckerboardDetector::image_cb, this);
+        if ( camInfoSubscriber2 == NULL )
+            camInfoSubscriber2 = _node.subscribe("CameraInfo", 1, &CheckerboardDetector::caminfo_cb2, this);
+        if ( imageSubscriber2 == NULL )
+            imageSubscriber2 = _node.subscribe("Image",1, &CheckerboardDetector::image_cb2, this);
+
+    }
+
+    void unsubscribe( )
+    {
+        camInfoSubscriber.shutdown();
+        camInfoSubscriber2.shutdown();
+        imageSubscriber.shutdown();
+        imageSubscriber2.shutdown();
+    }
+    
     void connectCb( )
     {
       boost::mutex::scoped_lock lock(this->mutexcalib);
       if (_pubDetection.getNumSubscribers() == 0 && _pubCornerPoint.getNumSubscribers() == 0 &&
           _pubPoseStamped.getNumSubscribers() == 0 && _pubPolygonArray.getNumSubscribers() == 0)
         {
-          camInfoSubscriber.shutdown();
-          camInfoSubscriber2.shutdown();
-          imageSubscriber.shutdown();
-          imageSubscriber2.shutdown();
+            unsubscribe();
         }
       else
         {
-          if ( camInfoSubscriber == NULL )
-            camInfoSubscriber = _node.subscribe("camera_info", 1, &CheckerboardDetector::caminfo_cb, this);
-          if ( imageSubscriber == NULL )
-            imageSubscriber = _node.subscribe("image", 1, &CheckerboardDetector::image_cb, this);
-          if ( camInfoSubscriber2 == NULL )
-            camInfoSubscriber2 = _node.subscribe("CameraInfo", 1, &CheckerboardDetector::caminfo_cb2, this);
-          if ( imageSubscriber2 == NULL )
-            imageSubscriber2 = _node.subscribe("Image",1, &CheckerboardDetector::image_cb2, this);
+            subscribe();
         }
     }
 
@@ -354,16 +387,21 @@ public:
             cam_info.distortion_model = "plumb_bob";
             cam_info.D.resize(5, 0);
         }
+        if (use_P) {
+            for (size_t i = 0; i < cam_info.D.size(); i++) {
+                cam_info.D[i] = 0.0;
+            }
+        }
         // check all the value of R is zero or not
         // if zero, normalzie it
-        if (std::equal(cam_info.R.begin() + 1, cam_info.R.end(), cam_info.R.begin())) {
+        if (use_P || std::equal(cam_info.R.begin() + 1, cam_info.R.end(), cam_info.R.begin())) {
             cam_info.R[0] = 1.0;
             cam_info.R[4] = 1.0;
             cam_info.R[8] = 1.0;
         }
         // check all the value of K is zero or not
         // if zero, copy all the value from P
-        if (std::equal(cam_info.K.begin() + 1, cam_info.K.end(), cam_info.K.begin())) {
+        if (use_P || std::equal(cam_info.K.begin() + 1, cam_info.K.end(), cam_info.K.begin())) {
             cam_info.K[0] = cam_info.P[0];
             cam_info.K[1] = cam_info.P[1];
             cam_info.K[2] = cam_info.P[2];

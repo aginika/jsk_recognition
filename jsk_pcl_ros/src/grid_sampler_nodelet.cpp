@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -43,7 +43,7 @@ namespace jsk_pcl_ros
   void GridSampler::onInit()
   {
     ConnectionBasedNodelet::onInit();
-    pub_ = advertise<jsk_pcl_ros::ClusterPointIndices>(*pnh_, "output", 1);
+    pub_ = advertise<jsk_recognition_msgs::ClusterPointIndices>(*pnh_, "output", 1);
     dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind (&GridSampler::configCallback, this, _1, _2);
     srv_ = boost::make_shared <dynamic_reconfigure::Server<Config> > (*pnh_);
@@ -65,7 +65,7 @@ namespace jsk_pcl_ros
   {
     boost::mutex::scoped_lock(mutex_);
     if (config.grid_size == 0.0) {
-      NODELET_WARN("grid_size == 0.0 is prohibited");
+      JSK_NODELET_WARN("grid_size == 0.0 is prohibited");
       return;
     }
     else {
@@ -99,7 +99,7 @@ namespace jsk_pcl_ros
       std::map<int, std::map<int, std::map<int, std::vector<size_t> > > >::iterator xit
         = grid.find(xbin);
       if (xit == grid.end()) {  // cannot find x bin
-        NODELET_DEBUG_STREAM("no x bin" << xbin);
+        JSK_NODELET_DEBUG_STREAM("no x bin" << xbin);
         std::map<int, std::vector<size_t> > new_z;
         std::vector<size_t> new_indices;
         new_indices.push_back(i);
@@ -109,12 +109,12 @@ namespace jsk_pcl_ros
         grid[xbin] = new_y;
       }
       else {
-        NODELET_DEBUG_STREAM("found x bin" << xbin);
+        JSK_NODELET_DEBUG_STREAM("found x bin" << xbin);
         std::map<int, std::map<int, std::vector<size_t> > > ybins = xit->second;
         std::map<int, std::map<int, std::vector<size_t> > >::iterator yit
           = ybins.find(ybin);
         if (yit == ybins.end()) { // cannot find y bin
-          NODELET_DEBUG_STREAM("no y bin" << ybin);
+          JSK_NODELET_DEBUG_STREAM("no y bin" << ybin);
           std::map<int, std::vector<size_t> > new_z;
           std::vector<size_t> new_indices;
           new_indices.push_back(i);
@@ -122,25 +122,25 @@ namespace jsk_pcl_ros
           xit->second[ybin] = new_z;
         }
         else {
-          NODELET_DEBUG_STREAM("found y bin" << ybin);
+          JSK_NODELET_DEBUG_STREAM("found y bin" << ybin);
           std::map<int, std::vector<size_t> > zbins = yit->second;
           std::map<int, std::vector<size_t> >::iterator zit
             = zbins.find(zbin);
           if (zit == zbins.end()) {
-            NODELET_DEBUG_STREAM("no z bin" << zbin);
+            JSK_NODELET_DEBUG_STREAM("no z bin" << zbin);
             std::vector<size_t> new_indices;
             new_indices.push_back(i);
             xit->second[ybin][zbin] = new_indices;
           }
           else {
-            NODELET_DEBUG_STREAM("found z bin" << zbin);
+            JSK_NODELET_DEBUG_STREAM("found z bin" << zbin);
             xit->second[ybin][zbin].push_back(i);
           }
         }
       }
     }
     // publish the result
-    jsk_pcl_ros::ClusterPointIndices output;
+    jsk_recognition_msgs::ClusterPointIndices output;
     output.header = msg->header;
     for (std::map<int, std::map<int, std::map<int, std::vector<size_t> > > >::iterator xit = grid.begin();
          xit != grid.end();
@@ -154,7 +154,7 @@ namespace jsk_pcl_ros
              zit != zbins.end();
              zit++) {
           std::vector<size_t> indices = zit->second;
-          NODELET_DEBUG_STREAM("size: " << indices.size());
+          JSK_NODELET_DEBUG_STREAM("size: " << indices.size());
           if (indices.size() > min_indices_) {
             PCLIndicesMsg ros_indices;
             ros_indices.header = msg->header;

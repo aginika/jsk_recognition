@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -59,8 +59,13 @@
 #include <boost/circular_buffer.hpp>
 #include <jsk_topic_tools/vital_checker.h>
 
+#include <pcl/filters/extract_indices.h>
+#include <yaml-cpp/yaml.h>
+
 namespace jsk_pcl_ros
 {
+  Eigen::Affine3f affineFromYAMLNode(const YAML::Node& pose);
+  
   std::vector<int> addIndices(const std::vector<int>& a,
                               const std::vector<int>& b);
   pcl::PointIndices::Ptr addIndices(const pcl::PointIndices& a,
@@ -71,6 +76,25 @@ namespace jsk_pcl_ros
   pcl::PointIndices::Ptr subIndices(const pcl::PointIndices& a,
                                     const pcl::PointIndices& b);
 
+  template <class PointT>
+  std::vector<typename pcl::PointCloud<PointT> ::Ptr>
+  convertToPointCloudArray(const typename pcl::PointCloud<PointT>::Ptr& cloud,
+                           const std::vector<pcl::PointIndices::Ptr>& indices)
+  {
+    pcl::ExtractIndices<PointT> extract;
+    extract.setInputCloud(cloud);
+    std::vector<typename pcl::PointCloud<PointT> ::Ptr> cloud_array;
+    for (size_t i = 0; i < indices.size(); i++) {
+      typename pcl::PointCloud<PointT> ::Ptr
+        segment (new pcl::PointCloud<PointT>);
+      extract.setIndices(indices[i]);
+      extract.filter(*segment);
+      cloud_array.push_back(segment);
+    }
+    return cloud_array;
+  }
+
+  
   template<class T>
   void appendVector(std::vector<T>& a, const std::vector<T>& b)
   {

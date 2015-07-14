@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -43,32 +43,52 @@ namespace jsk_pcl_ros
 {
   void TfTransformCloud::transform(const sensor_msgs::PointCloud2ConstPtr &input)
   {
+    vital_checker_->poke();
     sensor_msgs::PointCloud2 output;
     try
     {
-      if (pcl_ros::transformPointCloud(target_frame_id_, *input, output,
-                                       *tf_listener_)) {
-        pub_cloud_.publish(output);
+      if (use_latest_tf_) {
+        sensor_msgs::PointCloud2 latest_pointcloud(*input);
+        latest_pointcloud.header.stamp = ros::Time(0);
+        if (pcl_ros::transformPointCloud(target_frame_id_, latest_pointcloud, output,
+                                         *tf_listener_)) {
+          output.header.stamp = input->header.stamp;
+          pub_cloud_.publish(output);
+        }
+      }
+      else {
+        tf_listener_->waitForTransform(target_frame_id_, input->header.frame_id,
+                                       input->header.stamp, ros::Duration(duration_));
+        if (pcl_ros::transformPointCloud(target_frame_id_, *input, output,
+                                         *tf_listener_)) {
+          pub_cloud_.publish(output);
+        }
       }
     }
     catch (tf2::ConnectivityException &e)
     {
-      NODELET_ERROR("Transform error: %s", e.what());
+      JSK_NODELET_ERROR("Transform error: %s", e.what());
     }
     catch (tf2::InvalidArgumentException &e)
     {
-      NODELET_ERROR("Transform error: %s", e.what());
+      JSK_NODELET_ERROR("Transform error: %s", e.what());
+    }
+    catch (...)
+    {
+      NODELET_ERROR("Unknown transform error");
     }
   }
 
   void TfTransformCloud::onInit(void)
   {
-    ConnectionBasedNodelet::onInit();
+    DiagnosticNodelet::onInit();
     
     if (!pnh_->getParam("target_frame_id", target_frame_id_))
     {
-      ROS_WARN("~target_frame_id is not specified, using %s", "/base_footprint");
+      JSK_ROS_WARN("~target_frame_id is not specified, using %s", "/base_footprint");
     }
+    pnh_->param("duration", duration_, 1.0);
+    pnh_->param("use_latest_tf", use_latest_tf_, false);
     tf_listener_ = TfListenerSingleton::getInstance();
     pub_cloud_ = advertise<sensor_msgs::PointCloud2>(*pnh_, "output", 1);
   }

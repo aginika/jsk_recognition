@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -40,15 +40,16 @@
 #include <pcl_ros/pcl_nodelet.h>
 #include <dynamic_reconfigure/server.h>
 #include <jsk_pcl_ros/ICPRegistrationConfig.h>
-#include <jsk_pcl_ros/BoundingBox.h>
+#include <jsk_recognition_msgs/BoundingBox.h>
 #include <jsk_pcl_ros/ICPAlignWithBox.h>
-#include <jsk_pcl_ros/ICPResult.h>
+#include <jsk_pcl_ros/ICPAlign.h>
+#include <jsk_recognition_msgs/ICPResult.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/synchronizer.h>
 #include "jsk_pcl_ros/tf_listener_singleton.h"
 #include <jsk_topic_tools/connection_based_nodelet.h>
-#include <jsk_pcl_ros/PointsArray.h>
+#include <jsk_recognition_msgs/PointsArray.h>
 #include <sensor_msgs/CameraInfo.h>
 
 namespace jsk_pcl_ros
@@ -56,11 +57,11 @@ namespace jsk_pcl_ros
   class ICPRegistration: public jsk_topic_tools::ConnectionBasedNodelet
   {
   public:
-    typedef pcl::PointXYZRGB PointT;
+    typedef pcl::PointXYZRGBNormal PointT;
     typedef jsk_pcl_ros::ICPRegistrationConfig Config;
     typedef message_filters::sync_policies::ExactTime<
       sensor_msgs::PointCloud2,
-      BoundingBox > SyncPolicy;
+      jsk_recognition_msgs::BoundingBox > SyncPolicy;
     typedef message_filters::sync_policies::ExactTime<
       sensor_msgs::PointCloud2,
       sensor_msgs::PointCloud2
@@ -75,14 +76,17 @@ namespace jsk_pcl_ros
                        const sensor_msgs::PointCloud2::ConstPtr& reference_msg);
     virtual void alignWithBox(
       const sensor_msgs::PointCloud2::ConstPtr& msg,
-      const BoundingBox::ConstPtr& box_msg);
+      const jsk_recognition_msgs::BoundingBox::ConstPtr& box_msg);
     virtual bool alignWithBoxService(
       jsk_pcl_ros::ICPAlignWithBox::Request& req, 
       jsk_pcl_ros::ICPAlignWithBox::Response& res);
+    virtual bool alignService(
+      jsk_pcl_ros::ICPAlign::Request& req, 
+      jsk_pcl_ros::ICPAlign::Response& res);
     virtual void referenceCallback(
       const sensor_msgs::PointCloud2::ConstPtr& msg);
     virtual void referenceArrayCallback(
-      const PointsArray::ConstPtr& msg);
+      const jsk_recognition_msgs::PointsArray::ConstPtr& msg);
     virtual void referenceAddCallback(
       const sensor_msgs::PointCloud2::ConstPtr& msg);
     virtual void configCallback (Config &config, uint32_t level);
@@ -95,7 +99,7 @@ namespace jsk_pcl_ros
       const Eigen::Affine3f& offset,
       pcl::PointCloud<PointT>::Ptr& output_cloud,
       Eigen::Affine3d& output_transform);
-    virtual jsk_pcl_ros::ICPResult alignPointcloudWithReferences(
+    virtual jsk_recognition_msgs::ICPResult alignPointcloudWithReferences(
       pcl::PointCloud<PointT>::Ptr& cloud,
       const Eigen::Affine3f& offset,
       const std_msgs::Header& header);
@@ -110,6 +114,7 @@ namespace jsk_pcl_ros
       const sensor_msgs::CameraInfo::ConstPtr& msg);
     virtual void subscribe();
     virtual void unsubscribe();
+    
     ////////////////////////////////////////////////////////
     // ROS variables
     ////////////////////////////////////////////////////////
@@ -128,16 +133,24 @@ namespace jsk_pcl_ros
       pub_debug_flipped_cloud_;
     ros::Publisher pub_icp_result;
 
-    ros::ServiceServer srv_detect;
+    ros::ServiceServer srv_icp_align_with_box_;
+    ros::ServiceServer srv_icp_align_;
     bool align_box_;
     boost::shared_ptr <dynamic_reconfigure::Server<Config> > srv_;
     boost::mutex mutex_;
     message_filters::Subscriber<sensor_msgs::PointCloud2> sub_input_;
-    message_filters::Subscriber<BoundingBox> sub_box_;
+    message_filters::Subscriber<jsk_recognition_msgs::BoundingBox> sub_box_;
     boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> >sync_;
     boost::shared_ptr<message_filters::Synchronizer<ReferenceSyncPolicy> > sync_reference_;
     tf::TransformListener* tf_listener_;
 
+    /** @brief
+     * Store value of ~use_normal.
+     * If this parameter is true, ICPRegistration nodelet expects reference and input
+     * pointcloud have normal_x, normal_y and normal_z fields. 
+     */
+    bool use_normal_;
+    
     ////////////////////////////////////////////////////////
     // parameters for ICP
     ////////////////////////////////////////////////////////

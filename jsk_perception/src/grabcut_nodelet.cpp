@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -43,6 +43,11 @@ namespace jsk_perception
   void GrabCut::onInit()
   {
     DiagnosticNodelet::onInit();
+    srv_ = boost::make_shared <dynamic_reconfigure::Server<Config> > (*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
+      boost::bind (
+        &GrabCut::configCallback, this, _1, _2);
+    srv_->setCallback (f);
     pub_foreground_
       = advertise<sensor_msgs::Image>(*pnh_, "output/foreground", 1);
     pub_background_
@@ -85,8 +90,23 @@ namespace jsk_perception
     const sensor_msgs::Image::ConstPtr& foreground_msg,
     const sensor_msgs::Image::ConstPtr& background_msg)
   {
-    cv::Mat input = cv_bridge::toCvCopy(
-      image_msg, sensor_msgs::image_encodings::BGR8)->image;
+    boost::mutex::scoped_lock lock(mutex_);
+    cv::Mat input;
+    cv::Mat in_image = cv_bridge::toCvShare(image_msg,
+                                            image_msg->encoding)->image;
+    if (in_image.channels() == 3) {
+      input = in_image;
+    }
+    else if (in_image.channels() == 1) {
+      input = cv::Mat::zeros(in_image.rows, in_image.cols, CV_8UC3);
+      for (size_t j = 0; j < in_image.rows; ++j) {
+        for (size_t i = 0; i < in_image.cols; ++i) {
+          input.at<cv::Vec3b>(j, i) = cv::Vec3b(in_image.at<uchar>(j, i),
+                                                in_image.at<uchar>(j, i),
+                                                in_image.at<uchar>(j, i));
+        }
+      }
+    }
     cv::Mat foreground = cv_bridge::toCvCopy(
       foreground_msg, sensor_msgs::image_encodings::MONO8)->image;
     cv::Mat background = cv_bridge::toCvCopy(
@@ -95,7 +115,7 @@ namespace jsk_perception
           input.rows == foreground.rows &&
           background.cols == foreground.cols &&
           background.rows == foreground.rows)) {
-      NODELET_WARN("size of image is not corretct");
+      JSK_NODELET_WARN("size of image is not corretct");
       return;
     }
     cv::Mat mask = cv::Mat::zeros(input.size(), CV_8UC1);
@@ -103,10 +123,20 @@ namespace jsk_perception
     for (size_t j = 0; j < input.rows; j++) {
       for (size_t i = 0; i < input.cols; i++) {
         if (foreground.at<uchar>(j, i) == 255) {
-          mask.at<uchar>(j, i) = cv::GC_FGD;
+          if (use_probable_pixel_seed_) {
+            mask.at<uchar>(j, i) = cv::GC_PR_FGD;
+          }
+          else {
+            mask.at<uchar>(j, i) = cv::GC_FGD;
+          }
         }
         if (background.at<uchar>(j, i) == 255) {
-          mask.at<uchar>(j, i) = cv::GC_BGD;
+          if (use_probable_pixel_seed_) {
+            mask.at<uchar>(j, i) = cv::GC_PR_BGD;
+          }
+          else {
+            mask.at<uchar>(j, i) = cv::GC_BGD;
+          }
         }
       }
     }
@@ -136,6 +166,12 @@ namespace jsk_perception
     pub_background_.publish(bg_bridge.toImageMsg());
     pub_foreground_mask_.publish(fg_mask_bridge.toImageMsg());
     pub_background_mask_.publish(bg_mask_bridge.toImageMsg());
+  }
+
+  void GrabCut::configCallback(Config &config, uint32_t level)
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+    use_probable_pixel_seed_ = (config.seed_pixel_policy == 1);
   }
   
 }

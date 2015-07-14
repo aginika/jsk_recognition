@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <jsk_topic_tools/log_utils.h>
 #include "jsk_pcl_ros/pointcloud_database_server.h"
 #include <jsk_topic_tools/rosparam_utils.h>
 #include <pcl/io/pcd_io.h>
@@ -72,10 +73,10 @@ namespace jsk_pcl_ros
   {
     PCLNodelet::onInit();
     std::vector<std::string> pcd_files;
-    pub_points_ = pnh_->advertise<PointsArray>("output", 1);
+    pub_points_ = pnh_->advertise<jsk_recognition_msgs::PointsArray>("output", 1);
     if (!jsk_topic_tools::readVectorParameter(*pnh_, "models", pcd_files)
         || pcd_files.size() == 0) {
-      NODELET_FATAL("no models is specified");
+      JSK_NODELET_FATAL("no models is specified");
       return;
     }
 
@@ -92,7 +93,7 @@ namespace jsk_pcl_ros
 
   void PointcloudDatabaseServer::timerCallback(const ros::TimerEvent& event)
   {
-    PointsArray ros_out;
+    jsk_recognition_msgs::PointsArray ros_out;
     ros_out.header.stamp = event.current_real;
     for (size_t i = 0; i < point_clouds_.size(); i++) {
       ros_out.cloud_list.push_back(point_clouds_[i]->getROSPointCloud(event.current_real));

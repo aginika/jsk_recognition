@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -132,7 +132,7 @@ namespace jsk_pcl_ros
     srv_->setCallback (f);
     
     if (!pnh_->getParam("fixed_frame_id", fixed_frame_id_)) {
-      NODELET_ERROR("no ~fixed_frame_id is specified");
+      JSK_NODELET_ERROR("no ~fixed_frame_id is specified");
       return;
     }
 
@@ -148,19 +148,19 @@ namespace jsk_pcl_ros
       rotate_type_ = ROTATION_SPINDLE;
     }
     else {
-      NODELET_ERROR("unknown ~rotate_type: %s", rotate_type_str.c_str());
+      JSK_NODELET_ERROR("unknown ~rotate_type: %s", rotate_type_str.c_str());
       return;
     }
     
     pub_point_cloud_
       = advertise<sensor_msgs::PointCloud2>(*pnh_, "output/cloud", 1);
-    pub_inliers_ = advertise<ClusterPointIndices>(*pnh_, "output/inliers", 1);
+    pub_inliers_ = advertise<jsk_recognition_msgs::ClusterPointIndices>(*pnh_, "output/inliers", 1);
     pub_coefficients_
-      = advertise<ModelCoefficientsArray>(*pnh_, "output/coefficients", 1);
+      = advertise<jsk_recognition_msgs::ModelCoefficientsArray>(*pnh_, "output/coefficients", 1);
     pub_polygons_
-      = advertise<PolygonArray>(*pnh_, "output/polygons", 1);
+      = advertise<jsk_recognition_msgs::PolygonArray>(*pnh_, "output/polygons", 1);
     debug_pub_inliers_before_plane_
-      = advertise<ClusterPointIndices>(
+      = advertise<jsk_recognition_msgs::ClusterPointIndices>(
         *pnh_, "debug/connect_segments/inliers", 1);
   }
 
@@ -219,7 +219,7 @@ namespace jsk_pcl_ros
   }
 
   void LineSegmentCollector::triggerCallback(
-    const TimeRange::ConstPtr& trigger)
+    const jsk_recognition_msgs::TimeRange::ConstPtr& trigger)
   {
     boost::mutex::scoped_lock lock(mutex_);
     time_range_ = trigger;
@@ -235,7 +235,7 @@ namespace jsk_pcl_ros
     pcl::toROSMsg(*cloud, ros_cloud);
     ros_cloud.header = header;
     pub_point_cloud_.publish(ros_cloud);
-    ClusterPointIndices ros_indices;
+    jsk_recognition_msgs::ClusterPointIndices ros_indices;
     ros_indices.header = header;
     ros_indices.cluster_indices
       = pcl_conversions::convertToROSPointIndices(connected_indices, header);
@@ -260,7 +260,7 @@ namespace jsk_pcl_ros
       }
       // else {
       //   if (segment_clusters_.size() != 0) {
-      //     NODELET_INFO("dot: %f", delta_dot);
+      //     JSK_NODELET_INFO("dot: %f", delta_dot);
       //   }
       // }
     }
@@ -269,7 +269,7 @@ namespace jsk_pcl_ros
       return LineSegmentCluster::Ptr();
     }
     else {
-      //ROS_INFO("max angle: %f", acos(max_dot) * 180.0 / M_PI);
+      //JSK_ROS_INFO("max angle: %f", acos(max_dot) * 180.0 / M_PI);
       return segment_clusters_[max_index];
     }
   }
@@ -320,20 +320,20 @@ namespace jsk_pcl_ros
     std::vector<pcl::ModelCoefficients::Ptr> all_coefficients,
     std::vector<pcl::PointIndices::Ptr> all_indices)
   {
-    ClusterPointIndices ros_indices;
+    jsk_recognition_msgs::ClusterPointIndices ros_indices;
     ros_indices.header = header;
     ros_indices.cluster_indices
       = pcl_conversions::convertToROSPointIndices(all_indices,
                                                   header);
     pub_inliers_.publish(ros_indices);
-    ModelCoefficientsArray ros_coefficients;
+    jsk_recognition_msgs::ModelCoefficientsArray ros_coefficients;
     ros_coefficients.header = header;
     ros_coefficients.coefficients
       = pcl_conversions::convertToROSModelCoefficients(
         all_coefficients,
         header);
     pub_coefficients_.publish(ros_coefficients);
-    PolygonArray ros_polygon;
+    jsk_recognition_msgs::PolygonArray ros_polygon;
     ros_polygon.header = header;
     for (size_t i = 0; i < all_indices.size(); i++) {
       ConvexPolygon::Ptr convex
@@ -349,11 +349,11 @@ namespace jsk_pcl_ros
   
   void LineSegmentCollector::collect(
       const sensor_msgs::PointCloud2::ConstPtr& cloud_msg,
-      const ClusterPointIndices::ConstPtr& indices_msg,
-      const ModelCoefficientsArray::ConstPtr& coefficients_msg)
+      const jsk_recognition_msgs::ClusterPointIndices::ConstPtr& indices_msg,
+      const jsk_recognition_msgs::ModelCoefficientsArray::ConstPtr& coefficients_msg)
   {
     boost::mutex::scoped_lock lock(mutex_);
-    //NODELET_INFO("buffer length: %lu", pointclouds_buffer_.size());
+    //JSK_NODELET_INFO("buffer length: %lu", pointclouds_buffer_.size());
     pointclouds_buffer_.push_back(cloud_msg);
     indices_buffer_.push_back(indices_msg);
     coefficients_buffer_.push_back(coefficients_msg);

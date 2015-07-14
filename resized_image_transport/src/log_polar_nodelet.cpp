@@ -11,9 +11,10 @@ namespace resized_image_transport
   
 
   void LogPolar::initReconfigure(){
+    reconfigure_server_ = boost::make_shared <dynamic_reconfigure::Server<LogPolarConfig> > (pnh);
     ReconfigureServer::CallbackType f
       = boost::bind(&LogPolar::config_cb, this, _1, _2);
-    reconfigure_server_.setCallback(f);
+    reconfigure_server_->setCallback(f);
   }
 
   void LogPolar::initParams(){
@@ -45,7 +46,7 @@ namespace resized_image_transport
 
   
   void LogPolar::process(const sensor_msgs::ImageConstPtr &src_img, const sensor_msgs::CameraInfoConstPtr &src_info,
-			 sensor_msgs::ImagePtr &dst_img, sensor_msgs::CameraInfo &dst_info){
+                         sensor_msgs::ImagePtr &dst_img, sensor_msgs::CameraInfo &dst_info){
     int image_width, image_height;
     if(use_camera_info_){
       image_width = src_info->width;

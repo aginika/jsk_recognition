@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -47,7 +47,7 @@ namespace jsk_pcl_ros
     if (!use_imu_) {
       std::vector<double> direction;
       if (!jsk_topic_tools::readVectorParameter(*pnh_, "direction", direction)) {
-        NODELET_ERROR("You need to specify ~direction");
+        JSK_NODELET_ERROR("You need to specify ~direction");
         return;
       }
       pointFromVectorToVector<std::vector<double>, Eigen::Vector3f>(
@@ -62,7 +62,7 @@ namespace jsk_pcl_ros
       boost::bind (
         &NormalDirectionFilter::configCallback, this, _1, _2);
     srv_->setCallback (f);
-    
+    pnh_->param("queue_size", queue_size_, 200);
     pub_ = advertise<PCLIndicesMsg>(*pnh_, "output", 1);
   }
 
@@ -82,7 +82,7 @@ namespace jsk_pcl_ros
     else {
       sub_input_.subscribe(*pnh_, "input", 1);
       sub_imu_.subscribe(*pnh_, "input_imu", 1);
-      sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(100);
+      sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(queue_size_);
       sync_->connectInput(sub_input_, sub_imu_);
       sync_->registerCallback(boost::bind(&NormalDirectionFilter::filter, this, _1, _2));
     }
@@ -157,11 +157,15 @@ namespace jsk_pcl_ros
     }
     catch (tf2::ConnectivityException &e)
     {
-      NODELET_ERROR("Transform error: %s", e.what());
+      JSK_NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
     }
     catch (tf2::InvalidArgumentException &e)
     {
-      NODELET_ERROR("Transform error: %s", e.what());
+      JSK_NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
+    }
+    catch (tf2::ExtrapolationException &e)
+    {
+      JSK_NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
     }
   }
   
@@ -181,12 +185,6 @@ namespace jsk_pcl_ros
     pub_.publish(ros_indices);
   }
 
-  void NormalDirectionFilter::updateDiagnostic(
-    diagnostic_updater::DiagnosticStatusWrapper &stat)
-  {
-
-  }
-  
 }
 
 #include <pluginlib/class_list_macros.h>

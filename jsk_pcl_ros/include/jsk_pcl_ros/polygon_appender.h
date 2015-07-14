@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -36,8 +36,8 @@
 #ifndef JSK_PCL_ROS_POLYGON_APPENDER_H_
 #define JSK_PCL_ROS_POLYGON_APPENDER_H_
 
-#include <jsk_pcl_ros/PolygonArray.h>
-#include <jsk_pcl_ros/ModelCoefficientsArray.h>
+#include <jsk_recognition_msgs/PolygonArray.h>
+#include <jsk_recognition_msgs/ModelCoefficientsArray.h>
 #include <pcl_ros/pcl_nodelet.h>
 
 #include <message_filters/subscriber.h>
@@ -52,25 +52,25 @@ namespace jsk_pcl_ros
   {
   public:
     typedef message_filters::sync_policies::ExactTime<
-    PolygonArray, ModelCoefficientsArray,
-    PolygonArray, ModelCoefficientsArray> SyncPolicy2;
+    jsk_recognition_msgs::PolygonArray, jsk_recognition_msgs::ModelCoefficientsArray,
+    jsk_recognition_msgs::PolygonArray, jsk_recognition_msgs::ModelCoefficientsArray> SyncPolicy2;
     
   protected:
     virtual void onInit();
     virtual void subscribe();
     virtual void unsubscribe();
     virtual void appendAndPublish(
-      const std::vector<PolygonArray::ConstPtr>& arrays,
-      const std::vector<ModelCoefficientsArray::ConstPtr>& coefficients_array);
-    virtual void callback2(const PolygonArray::ConstPtr& msg0,
-                           const ModelCoefficientsArray::ConstPtr& coefficients0,
-                           const PolygonArray::ConstPtr& msg1,
-                           const ModelCoefficientsArray::ConstPtr& coefficients1);
+      const std::vector<jsk_recognition_msgs::PolygonArray::ConstPtr>& arrays,
+      const std::vector<jsk_recognition_msgs::ModelCoefficientsArray::ConstPtr>& coefficients_array);
+    virtual void callback2(const jsk_recognition_msgs::PolygonArray::ConstPtr& msg0,
+                           const jsk_recognition_msgs::ModelCoefficientsArray::ConstPtr& coefficients0,
+                           const jsk_recognition_msgs::PolygonArray::ConstPtr& msg1,
+                           const jsk_recognition_msgs::ModelCoefficientsArray::ConstPtr& coefficients1);
     
-    message_filters::Subscriber<PolygonArray> sub_polygon0_;
-    message_filters::Subscriber<PolygonArray> sub_polygon1_;
-    message_filters::Subscriber<ModelCoefficientsArray> sub_coefficients0_;
-    message_filters::Subscriber<ModelCoefficientsArray> sub_coefficients1_;
+    message_filters::Subscriber<jsk_recognition_msgs::PolygonArray> sub_polygon0_;
+    message_filters::Subscriber<jsk_recognition_msgs::PolygonArray> sub_polygon1_;
+    message_filters::Subscriber<jsk_recognition_msgs::ModelCoefficientsArray> sub_coefficients0_;
+    message_filters::Subscriber<jsk_recognition_msgs::ModelCoefficientsArray> sub_coefficients1_;
     boost::shared_ptr<message_filters::Synchronizer<SyncPolicy2> >sync_;
     ros::Publisher pub_polygon_, pub_coefficients_;
   private:

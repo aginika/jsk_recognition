@@ -2,6 +2,463 @@
 Changelog for package jsk_pcl_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.13 (2015-06-11)
+-------------------
+* [jsk_pcl_ros/SnapIt] Reset cached polygons when unsubscribe() is called
+* [jsk_pcl_ros] Do not die even if failed to call laser assemble in TiltLaserListener
+* [jsk_pcl_ros] Do not close convex polygon when building grid plane
+* [jsk_pcl_ros] Add debug message about grid plane construction in EnvironmentPlaneModeling
+* [jsk_pcl_ros] Do not publish projected polygon if it failed to estimate 3d point in ScreenPoint
+* [jsk_pcl_ros] Support ~always_subscribe in mask_image_filter
+* [jsk_pcl_ros] Add ~sensor_frame to MultiPlaneExtraction
+* [jsk_pcl_ros] Add waitForTransform to snapit tf resolvance
+* [jsk_pcl_ros/RegionGrowingMultiplePlaneSegmentation] Fix computation of
+  normal to decide order of vertices by comparing normals from vertices and coefficients
+* [jsk_pcl_ros] Untabify attention clipper
+* [jsk_pcl_ros/MultiPlaneExtraction] Support negative value for
+  magnification of plane
+* [jsk_pcl_ros/octree_change_detector] add MACHINE tag to octree_change_detector.launch
+* [jsk_pcl_ros] Add ~strict_tf parameter to NormalFlipToFrame to ignore
+  timestamp correctness
+* add topics for other recognition nodes
+* [jsk_pcl_ros] Add NormalEstimationOMP like pcl_ros but it can handle
+  timestamp correctly
+* [jsk_pcl_ros/EnvironemntPlaneModeling] Add normal direction threshold
+* [jsk_pcl_ros/TfTransformPointCloud] Ignore all error in tf conversion
+* [jsk_pcl_ros/HintedPlaneDetector] Supress warning messages about pointcloud fields
+* [jsk_pcl_ros]add exceptions around tf
+* [jsk_pcl_ros] Check if hint convex is valid in HintedPlaneDetector
+* [jsk_pcl_ros] Do not publish results if it failes to compute PCA in
+  ClusterPointIndicesDecomposer
+* [jsk_pcl_ros] Longer TF cache time for TreansformListener which created
+  via TFListenerSingleton
+* [jsk_pcl_ros/TiltLaserListener] Do not unsubscribe input topics if no
+  needed, change it to always subscribe input joint states
+* [jsk_pcl_ros] Add new nodelet: NormalFlipToFrame to align direction of
+  normal to specified frame_id
+* [jsk_pcl_ros] Use jsk_topic_tools/log_utils.h
+* [jsk_pcl_ros] Add ~queue_size parameter to NormalDirectionFilter
+* [jsk_pcl_ros] Add class and method name to tf error
+* [jsk_pcl_ros] Cache result of triangle decomposition
+* Contributors: Ryohei Ueda, YuOhara, Yuki Furuta
+
+0.2.12 (2015-05-04)
+-------------------
+* [jsk_pcl_ros] fix attention clipper non nan part
+* [jsk_pcl_ros] Add getRadius method to Cylinder
+* [jsk_pcl_ros] Remove nan indices from AttentionClipper
+* [jsk_pcl_ros] add prefixes params to publish each indices in AttentionClipper
+* [jsk_pcl_ros] Set pcl verbosity level to ERROR in multi_plane_extraction
+* [jsk_pcl_ros] Relay organized point cloud to "points" topic in stereo_reconstruction.launch
+* [jsk_pcl_ros] Ignore tf timestamp in TfTransformPointCloud if ~use_latest_tf is set
+* [jsk_pcl_ros] Add stereo_reconstruction.launch to reconstruct stereo
+  pointcloud from color images and depth image
+* [jsk_pcl_ros] Relay compressed images too in multi_resolution_organized_pointcloud.launch
+* [jsk_pcl_ros/mask_image_to_depth_considered_mask_image.cpp] add pcl::removeNaNFromPointCloud
+* [jsk_pcl_ros] Resize images in addition to pointcloud
+* change input image_points topic to /image_points_color
+* [jsk_pcl_ros]change icp result when none reference
+* [jsk_pcl_ros] remove nan point before icp kdtree search
+* chnage ros-param
+* change from linear to non-linear
+* modify extract_only_directed_region_of_close_mask_image.launch
+* add apply mask image publisher in mask_image_to_depth_considered_mask_image.cpp
+* change default parameter of extract num
+* rename to NODELET info and short fix
+* [jsk_pcl_ros] modify extract_only_directed_region_of_close_mask_image.launch
+* [jsk_pcl_ros] resize_points_publisher_nodelet resize rate feedback
+* [jsk_pcl_ros] mask_image_to_depth_considered_mask_image_nodelet resize rate feedback
+* change default parameter
+* rosparam to dynamic-reconfigure
+* check if current point is in directed region
+* change ROS_ERROR message
+* [jsk_pcl_ros] remove duplicate declaration of dependencies
+* enable selection of config direction method
+* ROS_INFO to ROS_ERROR
+* modify README and add image
+* [jsk_pcl_ros] add in_the_order_of_depth config
+* [jsk_pcl_ros] Add fisheye sphere pub
+* Changes to the syntax
+* Changes to syntax
+* Changes and modification of syntax
+* Changes as to the files
+* [jsk_pcl_ros] Use rectangle mode for image_view2 in extract_only_directed_region_of_close_mask_image.launch
+* add extract_only_directed_region_of_close_mask_image.launch
+* [jsk_pcl_ros] extract only directed region of mask image
+* changed config name and README
+* add dynamic reconfigure config
+* [jsk_pcl_ros] Add parameter to skip publishing assembled cloud
+* mask image to mask image which is at close range
+* Added a launch file for rtabmap mapping with multisense.
+* [jsk_pcl_ros] remove unneeded ROS_INFO line
+* Contributors: HRP2, Kamada Hitoshi, Kentaro Wada, Ryohei Ueda, Yohei Kakiuchi, Yoshimaru Tanaka, Yu Ohara, Yuto Inagaki, aginika, iKrishneel
+
+0.2.11 (2015-04-13)
+-------------------
+* [jsk_pcl_ros] Add argument to specify manager name to multi_resolution_pointcloud.launch
+* [jsk_pcl_ros] Add several methods and add voxel grid filter to estimate torus
+* [jsk_pcl_ros] Keep exact timestamp in AddPointIndices
+* Contributors: Ryohei Ueda
+
+0.2.10 (2015-04-09)
+-------------------
+* [jsk_pcl_ros] generalize namespace of launch value
+* [jsk_pcl_ros] Add option to flip z axis direction
+* [jsk_pcl_ros] Add geometry_msgs/PolygonStamped input for TorusFinder
+* [jsk_pcl_ros] Use simple ros::Subscriber for ResizePointsPublisher
+* [jsk_pcl_ros] remove bags in launch
+* [jsk_pcl_ros] Supress debug message of AttentionClipper
+* [jsk_pcl_ros] change tf fixed frame of config file
+* [jsk_pcl_ros] Better caching to handle different frame_id well in attention_clipper
+* [jsk_pcl_ros] Resolve tf only once in attention clipper
+* [jsk_pcl_ros] Fix projection bug around ConvexPolygon::projectOnPlane
+* [jsk_pcl_ros] Fix typo in EnvironmentPlaneModeling
+* Contributors: Ryohei Ueda, Yu Ohara
+
+
+0.2.9 (2015-03-29)
+------------------
+* 0.2.8
+* Update Changelog
+* [jsk_pcl_ros] Publish point indices which do not belong to any polygons
+  in EnvironmentPlaneModeling
+* [jsk_pcl_ros] Erode grid maps as c-space padding in EnvironmentPlaneModeling
+* [jsk_pcl_ros] Latch output topic of EnvironmentPlaneModeling
+* [jsk_pcl_ros] Check orientation of plane in GridPlane::fromROSMsg
+* Contributors: Ryohei Ueda
+
+0.2.8 (2015-03-29)
+------------------
+* [jsk_pcl_ros] Publish point indices which do not belong to any polygons
+  in EnvironmentPlaneModeling
+* [jsk_pcl_ros] Erode grid maps as c-space padding in EnvironmentPlaneModeling
+* [jsk_pcl_ros] Latch output topic of EnvironmentPlaneModeling
+* [jsk_pcl_ros] Check orientation of plane in GridPlane::fromROSMsg
+* Contributors: Ryohei Ueda
+
+0.2.7 (2015-03-26)
+------------------
+* [jsk_pcl_ros] Longer queue size for NormalDirectionFilter
+* [jsk_pcl_ros] Implement GridPlane::fromROSMsg method
+* Contributors: Ryohei Ueda
+
+0.2.6 (2015-03-25)
+------------------
+* [jsk_pcl_ros] Publish point with RGB from PolygonPointsSampler
+* [jsk_pcl_ros] Set CorrespondenceEstimationOrganizedProjection correctly
+* [jsk_pcl_ros] Support ~negative parameter to publish point indices which
+  does not inside of attention region
+* [jsk_pcl_ros] Support ~use_async in MultiPlaneExtraction
+* [jsk_pcl_ros] Clip duplicated pointcloud in PointCloudLocalization
+* [jsk_pcl_ros] Add ~use_normal to PointCloudLocalization
+* [jsk_pcl_ros] Wait for tf transformation before tansforming pointcloud
+* [jsk_pcl_ros] Complete footprint region to the nearest convex polygon in EnvironmentPlaneModeling
+* [jsk_pcl_ros] Add PolygonFlipper and fix orientation of convex among
+  several nodelets. Force to look upwards in EnvironmentPlaneModeling
+* [jsk_pcl_ros] New topic interface to snap pose stamped onto grid map in EnvironmentPlaneModeling
+* [jsk_pcl_ros] Do not depends geo_util.h on pcl_conversion_util.h in
+  order not to break downstream
+* [jsk_pcl_ros] Fix completion of footprint in looking up corresponding
+  gridmap in EnvironmentPlaneModeling
+* [jsk_pcl_ros] Fill occluded footprint region by bounding box in EnvironmentPlaneModeling
+* [jsk_pcl_ros] Add new nodelet to magnify PolygonArray
+* [jsk_pcl_ros] Add new sampler to sample pointcloud on polygon with fixed grid
+* [jsk_pcl_ros] Add perpendicular distance threshold to PlaneConcatenator
+* [jsk_pcl_ros] Add morphological filtering to grid planes
+* [jsk_pcl_ros] Add ~input/full_cloud and fix input pointcloud of
+  ExtractPolygonalPrismData to close loop of convex hull boundary
+* Contributors: Ryohei Ueda
+
+0.2.5 (2015-03-17)
+------------------
+* [jsk_pcl_ros] Optimize GridPlane::fillCellsFromPointCloud by using
+  pcl::ExtractPolygonalPrismData and now it's much much faster than before
+* [jsk_pcl_ros] Use pair of index to represent cells of grid
+* [jsk_pcl_ros] Refactor EnvironmentPlaneModeling
+* check target cloud data ifnot invalid
+* add passthrough_image sample launch
+* add organized_pc_to_point_indics
+* [jsk_pcl_ros] Smaller duration to wait for tf in pointcloud localization
+* add approx sync mode to point indices to mask image
+* [jsk_pcl_ros]fix miss-name in README
+* [jsk_pcl_ros]change ensync timing for plane
+* Contributors: Ryohei Ueda, JSK Lab Member, Yu Ohara, Yuto Inagaki
+
+0.2.4 (2015-03-08)
+------------------
+* [jsk_pcl_ros] Fix coding style of PointcloudScreenpoint
+* [jsk_pcl_ros] add ~update_offset service to update localizatoin
+  transformation manually
+* [jsk_pcl_ros] Add ~use_normal parameter to TorusFinder
+* [jsk_pcl_ros] Add hint axis parameter for TorusFinder
+  [jsk_pcl_ros] Publish PoseStamped from TorusFinder
+* [jsk_pcl_ros] Add service interface to snap footstep to planes in SnapIt
+* [jsk_pcl_ros] Publish PoseStamped from TorusFinder
+* [jsk_pcl_ros] Add image to PointCloudLocalization document
+* [jsk_pcl_ros] Wait tranfrosmtion of tf when clipping pointcloud and
+  fix to use y and z dimension of bounding box in AttentionClipper
+* [jsk_pcl_ros] Publish PointIndices from ROIClipper to satisfy ROI region
+* [jsk_pcl_ros] Fix PointCloudLocalization to work
+* [jsk_pcl_ros] Add voxel grid downsampling to keep pointcloud resolution
+  constant
+* [jsk_pcl_ros] Add PointCloudLocalization for simple SLAM
+* [jsk_pcl_ros] Support geometry_msgs/PolygonStamped in SnapIt
+* [jsk_pcl_ros] Support polygon input in PointcloudScreenPoint
+* [jsk_pcl_ros] Add GeometricConsistencyGrouping nodele
+* [jsk_pcl_ros] Add UniformSampling
+* [jsk_pcl_ros] Fix FeatureRegistration
+* [jsk_pcl_ros] Add FeatureRegistration to register pointclouds using 3D feature
+* [jsk_pcl_ros] Add PlanarPointCloudSimulator
+* [jsk_pcl_ros] Do not apply PCA for small pointclouds
+* Merge pull request `#737 <https://github.com/jsk-ros-pkg/jsk_recognition/issues/737>`_ from garaemon/spherical-cloud-simulator
+  [jsk_pcl_ros] Add SphericalPointCloudSimulator nodelet to simulate spindle laser scanner
+* [jsk_pcl_ros] Add SphericalPointCloudSimulator nodelet to simulate
+  pindle laser scanner
+* [jsk_pcl_ros] Add ~use_async parameter to NormalConcatenater
+* [jsk_pcl_ros] Fix direction of y-axis of bounding box to direct toward z-axis of pointcloud
+* [jsk_pcl_ros] Support normal in ICPRegistration nodelet
+* add simple_edge_detector_and_tracker.launch
+* [jsk_pcl_ros] add PCL_INCLUDE_DIRS to suppress error of compiling organized_edge_detector
+* [jsk_pcl_ros] repair include filed of organized_edge_detector
+* [jsk_pcl_ros] Use Eigen::Quaternionf::setFromTwoVectors to align box on plane
+* change reversed imu plane direction
+* Merge pull request `#728 <https://github.com/jsk-ros-pkg/jsk_recognition/issues/728>`_ from YuOhara/add_hinted_handle_estimator
+  Add hinted handle estimator
+* add comments
+* add_debug_visualizer
+* add hinted_handle_estimator
+* fix missing include def
+* [jsk_pcl_ros] Optimized HintedStickFinder
+  1. Use input pointcloud with normal not to run normal estimation in
+  HintedStickFinder
+  2. Add ~not_synchronize parameter to keep processing without more hint
+* [jsk_pcl_ros] Move documentation about
+  pointcloud_screenpoint_sample.launch from index.rst to README.md.
+  And deprecate sphinx documentation.
+* [jsk_pcl_ros] Wait for next new image in shutter callback in IntermittentImageAnnotator
+* [jsk_pcl_ros] Deprecate several nodelets
+* Merge pull request `#717 <https://github.com/jsk-ros-pkg/jsk_recognition/issues/717>`_ from YuOhara/remove_bags_in_libname
+  remove bag in libname
+* Merge pull request `#711 <https://github.com/jsk-ros-pkg/jsk_recognition/issues/711>`_ from YuOhara/add_mask_image_indices_concatator
+  Add mask image indices concatator
+* reversed plane direction
+* [jsk_pcl_ros] Return true in clear callback of IntermittentImageAnnotator
+* add imu_orientated_plane_rejector
+* remove bag in libname
+* renamed file name
+* rename mask_image_cluster_indices_concatenator to mask_image_cluster_filter
+* Merge remote-tracking branch 'origin/master' into add_mask_image_indices_concatator
+* [jsk_pcl_ros] Compile without optimization on travis
+* [jsk_pcl_ros] Add launch file for torus finder
+* [jsk_pcl_ros] Separate moveit filter into libjsk_pcl_ros_moveit
+* add topic to sync timestamp
+* changed sample_launch for concat indices
+* add indices concatenator_node with mask
+* renamed node
+* add imu_orientated plane detector and launch for icp-use
+* [jsk_pcl_ros] changed miss params and comment in data_names out of git
+* [jsk_pcl_ros] Add debug printing for tiem stamp confusing problem of resize_point_cloud
+* [jsk_pcl_ros] Fix advertise type for template pointcloud:
+  geometry_msgs/PoseStamped -> sensor_msgs/PointCloud2
+* [jsk_pcl_ros] Fix torus direciton to orient to sensor origin
+* [jsk_pcl_ros] Fix detected stick direction always directs to -y upper
+* [jsk_pcl_ros] Add PointCloudToClusterPointIndices nodelet
+* [jsk_pcl_ros] Publish PointXYZRGBNormal pointcloud from NormalEstimationIntegralImage
+* [jsk_pcl_ros] torus should directs to origin always in TorusFinder
+* [jsk_pcl_ros] Separate output library into 3 libraries in order to
+  reduce memory usage of linking
+* [jsk_pcl_ros] Fix README.md
+* [jsk_pcl_ros] Publish geometry_msgs/PoseStamped and
+  geometry_msgs/PointStamped from CentroidPublisher
+* [jsk_pcl_ros] Fix coding style of CentroidPublisher
+* [jsk_pcl_ros] Support spherical projection model in BorderEstimator
+* Merge remote-tracking branch 'refs/remotes/origin/master' into range-image
+* [jsk_pcl_ros] Support laser model in BorderEstimator and update document
+* depth_calibration tutorial with link markup
+* add depth calibration tutorial
+* add depth calibration tutorial
+* Merge pull request `#687 <https://github.com/jsk-ros-pkg/jsk_recognition/issues/687>`_ from garaemon/cached-particle-filter
+  [jsk_pcl_ros] Cache result o nearest-negihbor search
+* [jsk_pcl_ros] Cache result o nearest-negihbor search
+* Merge remote-tracking branch 'refs/remotes/origin/master' into 2d-reject
+* [jsk_pcl_ros] Check direction of detected stick and hint line in 2-D image coordinate
+* Fix license: WillowGarage -> JSK Lab
+* Contributors: Ryohei Ueda, Yuto Inagaki, JSK Lab Member, Yu Ohara, Xiangyu Chen
+
+0.2.3 (2015-02-02)
+------------------
+* [jsk_pcl_ros] Add ~min_inliers and ~cylinder_fitting_trial parameter to
+  try cylinder fitting severeal times in HintedStickFinder
+* [jsk_pcl_ros] Implement utility function to generate cylinder marker
+  from cylinder object
+* [jsk_pcl_ros] FIx mis-publishing of coefficients of HintedStickFInder
+* [jsk_pcl_ros, jsk_perception] Move mask image operation to jsk_perception
+* [jsk_pcl_ros] Publish inliers and coefficients from HintedStickFinder
+* Remove rosbuild files
+* [jsk_perception] Add DilateMaskImage
+* Contributors: Ryohei Ueda
+
+0.2.2 (2015-01-30)
+------------------
+* [jsk_pcl_ros] Add HintedStickFinder to detect stick with human interfaction
+* Contributors: Ryohei Ueda, Kei Okada
+
+0.2.1 (2015-01-30)
+------------------
+* Merge pull request #672 from k-okada/add_image_view2
+  add image_view2
+* [jsk_pcl_ros] add jsk_recognition_msgs to catkin_package:DEPEND
+* [jsk_pcl_ros] Add HintedStickFinder to detect stick with human interfaction
+
+0.2.0 (2015-01-29)
+------------------
+
+0.1.34 (2015-01-29)
+-------------------
+* support both yaml 0.3.0(hydro) and yaml 0.5.0(indigo)
+* [jsk_pcl_ros] Fixed serious bug to detect points near from polygon
+* use this to call methods, I need this to compile on indigo, but not sure if this really works, please check if this is correct @YuOhara, @garaemon
+* depending on cv_bridge is recommended, see http://wiki.ros.org/indigo/Migration#OpenCV
+* [jsk_pcl_ros] Update document and python script to use jsk_recognition_msgs
+* [jsk_pcl_ros] Fix document indent and add image of HSIColorFilter
+* [jsk_pcl_ros] Add documentation about RGBColorFilter and HSVColorFilter
+* Fix unchanged path to message header
+* [jsk_pcl_ros] Fix header location of find_object_on_plane.h
+* [jsk_pcl_ros, jsk_perception] Move find_object_on_plane from
+  jsk_perception to jsk_pcl_ros to make these packages independent
+* [jsk_pcl_ros, jsk_perception] Use jsk_recognition_msgs
+* [jsk_pcl_ros, jsk_perception, resized_image_transport] Do not include
+  jsk_topic_tools/nodelet.cmake because it is exported by CFG_EXTRAS
+* merge master
+* [jsk_pcl_ros] Add image of TiltLaserListener to document
+* add options for align box and change base_frame_id
+* [jsk_pcl_ros] add ~not_publish_tf parameter to ParticleFilterTracking
+* [jsk_pcl_ros] Refactor ParticleFilterTracking
+* [jsk_pcl_ros] Optimize ReversedParticleFilter by not updating octree per
+  each calculation
+* [jsk_pcl_ros] Add *reversed* mode for ParticleFilterTracking and add
+  sample to localize robot by tilt laser
+* [jsk_pcl_ros] Fix documentation
+  * Update picture of OrganizedMultiPlaneSegmentation
+  * Fix indent
+  * Fix AddColorFromImage picture
+* [jsk_pcl_ros] Update ParticleFilterTracking document
+* [jsk_pcl_ros] Increase initial number of particles to avoid SEGV
+* Contributors: Ryohei Ueda, Kei Okada, JSK Lab Member
+
+0.1.33 (2015-01-24)
+-------------------
+* [jsk_pcl_ros] Add magnify parameter to MultiPlaneExtraction
+* [jsk_pcl_ros] Added several flags to toggle filtering in HintedPlaneDetector
+* [jsk_pcl_ros] Update min-max value of min_height and max_height of MultiPlaneExtraction
+* [jsk_pcl_ros] Publish indices from MultiPlaneExtraction
+* [jsk_pcl_ros] Catch tf2::ExtrapolationException error in normal
+  direction filter
+* [jsk_pcl_ros] Add euclidean segmentation to hinted plane detector sample
+* [jsk_pcl_ros] Close convex region
+* [jsk_pcl_ros, jsk_perception] Fix CmakeList for catkin build. Check jsk_topic_tools_SOURCE_PREFIX
+* update params for tracking
+* [jsk_pcl_ros] AddPointIndices
+* [jsk_pcl_ros]change border_estimator to publish indices instread of pointcloud
+* [jsk_pcl_ros] Refactor HintedPlaneDetector
+* [jsk_pcl_ros] Add density filtering to HintedPlaneDetector
+* [jsk_pcl_ros] Supress warning message from OrganizedMultiPlaneSegmentation
+* [jsk_pcl_ros] add ~overwrap_angle parameter to TiltLaserListener
+* [jsk_pcl_ros] Add nodelet to convert geometry_msgs/PolygonStamped into
+  mask image
+* [jsk_pcl_ros] Initialize centroid value
+* [jsk_pcl_ros] Check if a point is nan in ROIClipper
+* [jsk_perception] Update HintedPlaneDetector with better algorithm.
+* [jsk_pcl_ros] Supress warning message from NormalConcatenator
+* [jsk_pcl_ros] Fix timestamp of pointcloud of TiltLaserListener and do
+  not publish same pointcloud twice by TiltLaserListener
+* [jsk_pcl_ros] add ROIToMaskImage and ROIToRect
+* [jsk_pcl_ros] Add RectToMaskImage and MaskImageFilter to filter
+  non-organized pointcloud by mask image
+* standize codes around brackets
+* clean codes in particle_filter_tracking
+* add frame_id_decision
+* [jsk_pcl_ros] implement mask image converters: MaskImageToROI and MaskImageToRect
+* add tracking option that initialize first pose with BBox
+* adding comments to pointcloud_screenpoint.launch and relatives
+* [jsk_pcl_ros] Add TorusFinder
+* [jsk_pcl_ros] update document about ROIClipper
+* [jsk_pcl_ros] Fix ROIClipper and RectToROI to work
+* [jsk_pcl_ros] Do not take nested lock of mutex in roi_cipper
+* [jsk_pcl_ros] Support pointcloud filtering by ROI in ROIClipper and add
+  converter from rectangle region into ROI
+* [jsk_pcl_ros] nodelet to add color to pointcloud from image
+* [jsk_pcl_ros] nodelet to add color to pointcloud from image
+* add none result publisher when reference is empty
+* [jsk_pcl_ros] Publish pose of matched template in LINEMOD
+* Contributors: Ryohei Ueda, Hiroaki Yaguchi, JSK Lab Member, Yu Ohara, Yuto Inagaki
+
+0.1.32 (2015-01-12)
+-------------------
+* add Torus.msg and TorusArrray.msg
+* [jsk_pcl_ros, checkerboard_detector] Fix offset from checker board
+* [jsk_pcl_ros] Use pcl::LINEMOD in LINEMODDetector for memory efficiency
+* [jsk_pcl_ros] Use linemod class when training linemod template
+* [jsk_pcl_ros] tune parameter of multi plane based object detection using
+  spindle laser
+* Contributors: Ryohei Ueda, Yuto Inagaki
+
+0.1.31 (2015-01-08)
+-------------------
+* Merge pull request #563 from garaemon/no-indices-for-multi-plane-extraction
+  [jsk_pcl_ros] Parameter to disable indices in MultiPlaneExtraction
+* [jsk_pcl_ros] Do not use indices in MultiPlaneExtraction
+* Merge pull request #562 from garaemon/add-plane-concatenator
+  [jsk_pcl_ros] PlaneConcatenator: nodelet to concatenate near planes
+* [jsk_pcl_ros] PlaneConcatenator: nodelet to concatenate near planes
+* Merge pull request #561 from garaemon/add-clear-cache-service
+  [jsk_pcl_ros] Add ~clear_cache service to TiltLaserListener
+* [jsk_pcl_ros] Add ~clear_cache service to restart collecting
+  laser data in TiltLaserListener
+* [jsk_pcl_ros] Support multiple interest region in AttentionClipper
+* [jsk_pcl_ros] Support initial pose of AttentionClipper
+* [jsk_pcl_ros/LINEMODTrainer] Use wildcard in compressing data to
+  generate ltm
+* [jsk_pcl_ros] Multithread safe LINEMODTrainer by avoiding
+  pcl::RangeImage non-thread safe initialization
+* [jsk_pcl_ros] Do not publish range image (It's not stable under OpenMP)
+  and use directory rather than filename when calling tar
+* [jsk_pcl_ros] Train linemod with OpenMP and publish range image
+  with color
+* [jsk_pcl_ros] Utility launch file and scripts to training LINEMOD from
+  bag file
+* [jsk_pcl_ros] Add image for LINEMODTrainer documentation
+* [jsk_pcl_ros] Decrease memory usage when training LINEMOD
+* [jsk_pcl_ros] Sampling viewpoint to generate training data
+  for LINEMOD
+* [jsk_pcl_ros] Remove linemod rotation quantization
+* [jsk_pcl_ros] Use triangle decomposition to check a point is inside
+  or not of polygon
+* [jsk_pcl_ros] Add picture of LINEMODDetector
+* [jsk_pcl_ros] SupervoxelSegmentation: new nodelet to wrap
+  pcl::SupervoxelClustering
+* [jsk_pcl_ros] Refine Model by ICP in IncrementalModelRegistration
+* [jsk_pcl_ros] Add simple icp service to ICPRegistration
+* [jsk_pcl_ros] add utility launch file to capture training data from multisense
+* [jsk_pcl_ros] Publish the number of samples from CaptureStereoSynchronizer
+* [jsk_pcl_ros] Fix when ROI is outside of the image in AttentionClipper
+* [jsk_pcl_ros] Fix when ROI is outside of the image in AttentionClipper
+* Merge pull request #532 from garaemon/add-mask-image-to-point-indices
+  [jsk_pcl_ros] Add MaskImageToPointIndices
+* Merge pull request #531 from garaemon/add-incremental-pointcloud-registration
+  [jsk_pcl_ros] IncrementalModelRegistration Add new nodelet to build full 3d model from sequentially captured pointcloud
+* fix to compile on indigo #529
+* [jsk_pcl_ros] MaskImageToPointIndices: add nodelet to convert mask image to point indices
+* [jsk_pcl_ros] Add new nodelet to build full 3d model from
+  sequentially captured pointcloud: IncrementalModelRegistration
+* [jsk_pcl_ros] untabify icp_registration_nodelet.cpp
+* [jsk_pcl_ros] update document of IntermittentImageAnnotator
+* [jsk_pcl_ros] Storing pointcloud and publish pointcloud inside
+  of ROI specified
+* [jsk_pcl_ros] Visualize selected ROI as marker in IntermittentImageAnnotator
+* [jsk_pcl_ros] Add ~rate parameter to throttle image publishing from IntermittentImageAnnotator
+* add camera frame param to handle_estimator.l
+
 0.1.30 (2014-12-24)
 -------------------
 * Publish specified ROI as PosedCameraInfo in IntermittentImageAnnotator
@@ -296,7 +753,7 @@ Changelog for package jsk_pcl_ros
 * use colorCategory20 function to colorize pointcloud in ClusterPointIndicesDecomposer
 * visualizing connection of planes with lines in OrganizedMultiPlaneSegmentation
 * use rosparam_utils of jsk_topic_tools in StaticPolygonArrayPublisher
-* Contributors: Ryohei Ueda, wesleypchan, ohara
+* Contributors: Ryohei Ueda, wesleypchan, Yu Ohara
 
 0.1.17 (2014-09-07)
 -------------------
@@ -544,7 +1001,7 @@ Changelog for package jsk_pcl_ros
 * make paritcal_filter_tracking_nodelet publish tracked object tf trasnformation
 * add two launch files to run openni on remote machine
 * add octree_change_detector
-* Contributors: Chan Wesley, Shunichi Nozawa, Yuto Inagaki, Masaki Murooka, Ryo Terasawa, Ryohei Ueda, Yohei Kakiuchi, Yusuke Furuta, Kei Okada
+* Contributors: Ryo Terasawa, Chan Wesley, Shunichi Nozawa, Yuto Inagaki, Masaki Murooka, Ryohei Ueda, Yohei Kakiuchi, Yusuke Furuta, Kei Okada
 
 0.1.4 (2014-04-25)
 ------------------

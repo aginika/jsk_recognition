@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -78,7 +78,7 @@ namespace jsk_pcl_ros
     rip.createFromPointCloudWithFixedSize(*cloud, cloud->width, cloud->height,
 					  319.5, 239.5, 525.0, 525.0, static_cast<Eigen::Affine3f>(Eigen::Translation3f(0.0, 0.0, 0.0)));
     rip.setUnseenToMaxRange();
-    ROS_INFO_STREAM("Built range image " << rip.width << "x" << rip.height);
+    JSK_ROS_INFO_STREAM("Built range image " << rip.width << "x" << rip.height);
 
     pcl::NarfKeypoint narf;
     narf.setRangeImageBorderExtractor(&ribe);

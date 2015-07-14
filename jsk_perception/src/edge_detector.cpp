@@ -1,4 +1,5 @@
 #include <nodelet/nodelet.h>
+#include <jsk_topic_tools/log_utils.h>
 #include <jsk_perception/EdgeDetectorConfig.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -73,19 +74,19 @@ class EdgeDetector: public nodelet::Nodelet
             }
         catch (cv::Exception &e)
             {
-                NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+                JSK_NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
             }
     }
 
     void subscribe()
     {
-        NODELET_DEBUG("Subscribing to image topic.");
+        JSK_NODELET_DEBUG("Subscribing to image topic.");
         img_sub_ = it_->subscribe("image", 3, &EdgeDetector::imageCallback, this);
     }
 
     void unsubscribe()
     {
-        NODELET_DEBUG("Unsubscribing from image topic.");
+        JSK_NODELET_DEBUG("Unsubscribing from image topic.");
         img_sub_.shutdown();
     }
 
@@ -107,15 +108,15 @@ class EdgeDetector: public nodelet::Nodelet
 public:
     void onInit() {
       nh_ = getNodeHandle();
-      it_.reset(new image_transport::ImageTransport(nh_));
       subscriber_count_ = 0;
-      image_transport::SubscriberStatusCallback connect_cb    = boost::bind(&EdgeDetector::connectCb, this, _1);
-      image_transport::SubscriberStatusCallback disconnect_cb = boost::bind(&EdgeDetector::disconnectCb, this, _1);
-      img_pub_ = image_transport::ImageTransport(ros::NodeHandle(nh_, "edge")).advertise("image", 1, connect_cb, disconnect_cb);
-
       dynamic_reconfigure::Server<jsk_perception::EdgeDetectorConfig>::CallbackType f =
         boost::bind(&EdgeDetector::reconfigureCallback, this, _1, _2);
       srv.setCallback(f);
+      it_.reset(new image_transport::ImageTransport(nh_));
+      image_transport::SubscriberStatusCallback connect_cb    = boost::bind(&EdgeDetector::connectCb, this, _1);
+      image_transport::SubscriberStatusCallback disconnect_cb = boost::bind(&EdgeDetector::disconnectCb, this, _1);
+      img_pub_ = image_transport::ImageTransport(ros::NodeHandle(nh_, "edge")).advertise("image", 1, connect_cb, disconnect_cb);
+      
     }
   
 };
