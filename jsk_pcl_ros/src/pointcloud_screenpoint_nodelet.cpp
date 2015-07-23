@@ -163,7 +163,7 @@ bool jsk_pcl_ros::PointcloudScreenpoint::extract_point (pcl::PointCloud< pcl::Po
   int x, y;
 
   x = reqx < 0.0 ? ceil(reqx - 0.5) : floor(reqx + 0.5);
-  y = reqy < 0.0 ? ceil(reqy - 0.5) : floor(reqy + 0.5);
+  y = reqy < 0.0 ? ceil(reqy - 0.5) : floor(reqy + 0.5); 
   JSK_ROS_WARN("Request : %d %d", x, y);
 
   if (checkpoint (in_pts, x, y, resx, resy, resz)) {
@@ -411,10 +411,10 @@ void jsk_pcl_ros::PointcloudScreenpoint::callback_flow(const sensor_msgs::PointC
   for (size_t i = 0; i < array_ptr->flow.size(); i++) {
     opencv_apps::Point2D p = array_ptr->flow[i].point;
     float rx, ry, rz;
-    bool ret = extract_point (pts_, p.x, p.y, rx, ry, rz);
+    bool ret = extract_point (pts_, std::max(p.x, 1.0), std::max(p.y, 1.0), rx, ry, rz);
     if (!ret) {
-      JSK_NODELET_ERROR("Failed to project point");
-      return;
+      JSK_NODELET_ERROR("Failed to project point %d", array_ptr->flow[i].id.uuid);
+      continue;
     }
     jsk_recognition_msgs::Flow3D flow3d;
     geometry_msgs::Point p_projected;
