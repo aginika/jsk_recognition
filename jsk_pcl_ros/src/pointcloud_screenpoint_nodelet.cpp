@@ -72,9 +72,9 @@ void jsk_pcl_ros::PointcloudScreenpoint::onInit()
     pub_points_ = pnh_->advertise< sensor_msgs::PointCloud2 > ("output", 1);
   }
 
-  if(publish_flow3d_){
-    pub_flow3d_ = pnh_->advertise< jsk_recognition_msgs::Flow3DArrayStamped > ("output_flow", 1);
-  }
+  // if(publish_flow3d_){
+  //   pub_flow3d_ = pnh_->advertise< jsk_recognition_msgs::Flow3DArrayStamped > ("output_flow", 1);
+  // }
 
   pub_polygon_ = pnh_->advertise<geometry_msgs::PolygonStamped>("output_polygon", 1);
 
@@ -132,12 +132,12 @@ void jsk_pcl_ros::PointcloudScreenpoint::onInit()
     }
   }
 
-  if (use_flow_){
-    flow_sub_.subscribe (*pnh_, "flow", queue_size_);
-    sync_flow_ = boost::make_shared < message_filters::Synchronizer< FlowApproxSyncPolicy > > (queue_size_);
-    sync_flow_->connectInput (points_sub_, flow_sub_);
-    sync_flow_->registerCallback (boost::bind (&PointcloudScreenpoint::callback_flow, this, _1, _2));   
-  }
+  // if (use_flow_){
+  //   flow_sub_.subscribe (*pnh_, "flow", queue_size_);
+  //   sync_flow_ = boost::make_shared < message_filters::Synchronizer< FlowApproxSyncPolicy > > (queue_size_);
+  //   sync_flow_->connectInput (points_sub_, flow_sub_);
+  //   sync_flow_->registerCallback (boost::bind (&PointcloudScreenpoint::callback_flow, this, _1, _2));   
+  // }
 
   points_sub_.registerCallback (boost::bind (&PointcloudScreenpoint::points_cb, this, _1));
 }
@@ -401,52 +401,52 @@ void jsk_pcl_ros::PointcloudScreenpoint::callback_poly(const sensor_msgs::PointC
   poly_cb(array_ptr);
 }
 
-void jsk_pcl_ros::PointcloudScreenpoint::callback_flow(const sensor_msgs::PointCloud2ConstPtr& points_ptr,
-                                                       const opencv_apps::FlowArrayStampedConstPtr& array_ptr) {
-  jsk_recognition_msgs::Flow3DArrayStamped flow3d_array_msg;
-  flow3d_array_msg.header = array_ptr->header;
-  flow3d_array_msg.header.frame_id = points_ptr->header.frame_id;
+// void jsk_pcl_ros::PointcloudScreenpoint::callback_flow(const sensor_msgs::PointCloud2ConstPtr& points_ptr,
+//                                                        const opencv_apps::FlowArrayStampedConstPtr& array_ptr) {
+//   jsk_recognition_msgs::Flow3DArrayStamped flow3d_array_msg;
+//   flow3d_array_msg.header = array_ptr->header;
+//   flow3d_array_msg.header.frame_id = points_ptr->header.frame_id;
 
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr result_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-  for (size_t i = 0; i < array_ptr->flow.size(); i++) {
-    opencv_apps::Point2D p = array_ptr->flow[i].point;
-    float rx, ry, rz;
-    bool ret = extract_point (pts_, std::max(p.x, 1.0), std::max(p.y, 1.0), rx, ry, rz);
-    if (!ret) {
-      JSK_NODELET_ERROR("Failed to project point %d", array_ptr->flow[i].id.uuid);
-      continue;
-    }
-    jsk_recognition_msgs::Flow3D flow3d;
-    geometry_msgs::Point p_projected;
-    p_projected.x = rx;
-    p_projected.y = ry;
-    p_projected.z = rz;
-    flow3d.point = p_projected;
-    flow3d.id = array_ptr->flow[i].id;
-    //TODO
-    // If need convert velocity too...
-    if (false){
-    }
+//   pcl::PointCloud<pcl::PointXYZRGB>::Ptr result_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+//   for (size_t i = 0; i < array_ptr->flow.size(); i++) {
+//     opencv_apps::Point2D p = array_ptr->flow[i].point;
+//     float rx, ry, rz;
+//     bool ret = extract_point (pts_, std::max(p.x, 1.0), std::max(p.y, 1.0), rx, ry, rz);
+//     if (!ret) {
+//       JSK_NODELET_ERROR("Failed to project point %d", array_ptr->flow[i].id.uuid);
+//       continue;
+//     }
+//     jsk_recognition_msgs::Flow3D flow3d;
+//     geometry_msgs::Point p_projected;
+//     p_projected.x = rx;
+//     p_projected.y = ry;
+//     p_projected.z = rz;
+//     flow3d.point = p_projected;
+//     flow3d.id = array_ptr->flow[i].id;
+//     //TODO
+//     // If need convert velocity too...
+//     if (false){
+//     }
 
-    flow3d_array_msg.flow.push_back(flow3d);
+//     flow3d_array_msg.flow.push_back(flow3d);
 
-    pcl::PointXYZRGB pcl_p;
-    pcl_p.x = rx;
-    pcl_p.y = ry;
-    pcl_p.z = rz;
-    pcl_p.r = 255;
-    pcl_p.g = 0;
-    pcl_p.b = 0;
-    result_cloud->points.push_back(pcl_p);
-  }
+//     pcl::PointXYZRGB pcl_p;
+//     pcl_p.x = rx;
+//     pcl_p.y = ry;
+//     pcl_p.z = rz;
+//     pcl_p.r = 255;
+//     pcl_p.g = 0;
+//     pcl_p.b = 0;
+//     result_cloud->points.push_back(pcl_p);
+//   }
 
-  pub_flow3d_.publish(flow3d_array_msg);
+//   pub_flow3d_.publish(flow3d_array_msg);
 
-  sensor_msgs::PointCloud2::Ptr ros_cloud(new sensor_msgs::PointCloud2);
-  pcl::toROSMsg(*result_cloud, *ros_cloud);
-  ros_cloud->header = header_;
-  pub_points_.publish(ros_cloud);
-}
+//   sensor_msgs::PointCloud2::Ptr ros_cloud(new sensor_msgs::PointCloud2);
+//   pcl::toROSMsg(*result_cloud, *ros_cloud);
+//   ros_cloud->header = header_;
+//   pub_points_.publish(ros_cloud);
+// }
 
 void jsk_pcl_ros::PointcloudScreenpoint::callback_rect(const sensor_msgs::PointCloud2ConstPtr& points_ptr,
                                                        const geometry_msgs::PolygonStampedConstPtr& array_ptr) {

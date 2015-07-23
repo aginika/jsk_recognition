@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(jsk_recognition_msgs)
 find_package(catkin REQUIRED
-  std_msgs sensor_msgs geometry_msgs message_generation pcl_msgs uuid_msgs)
+  std_msgs sensor_msgs geometry_msgs message_generation pcl_msgs)
 add_message_files(
   FILES
   SimpleOccupancyGrid.msg
@@ -42,15 +42,15 @@ add_message_files(
   Line.msg
   ICPResult.msg
   ImageDifferenceValue.msg
-  Flow3D.msg
-  Flow3DArray.msg
-  Flow3DArrayStamped.msg
+  # Flow3D.msg
+  # Flow3DArray.msg
+  # Flow3DArrayStamped.msg
   )
 
 generate_messages(
   DEPENDENCIES
-  std_msgs sensor_msgs geometry_msgs pcl_msgs uuid_msgs
+  std_msgs sensor_msgs geometry_msgs pcl_msgs
 )
 catkin_package(
-  CATKIN_DEPENDS std_msgs sensor_msgs geometry_msgs pcl_msgs uuid_msgs
+  CATKIN_DEPENDS std_msgs sensor_msgs geometry_msgs pcl_msgs
 )
