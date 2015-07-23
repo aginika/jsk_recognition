@@ -368,6 +368,7 @@ namespace jsk_pcl_ros
       center_p.position.x = center[0];
       center_p.position.y = center[1];
       center_p.position.z = center[2];
+      center_p.orientation.w = 1;
       keypoints.poses.push_back(center_p);
 
       Eigen::Vector4f points[2];
@@ -379,6 +380,7 @@ namespace jsk_pcl_ros
       	    center_p.position.x = points[i][0];
       	    center_p.position.y = points[j][1];
       	    center_p.position.z = points[k][2];
+	    center_p.orientation.w = 1;
       	    keypoints.poses.push_back(center_p);
       	  }
       	}
