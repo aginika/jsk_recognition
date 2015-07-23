@@ -52,10 +52,11 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/common/centroid.h>
-
+#include <pcl/common/common.h>
 #include "jsk_recognition_msgs/ClusterPointIndices.h"
 #include "jsk_pcl_ros/EuclideanSegment.h"
 #include "jsk_recognition_msgs/Int32Stamped.h"
+#include "geometry_msgs/PoseArray.h"
 
 #include "jsk_pcl_ros/EuclideanClusteringConfig.h"
 #include <diagnostic_updater/diagnostic_updater.h>
@@ -89,6 +90,7 @@ namespace jsk_pcl_ros
     ros::Publisher result_pub_;
     ros::Subscriber sub_input_;
     ros::Publisher cluster_num_pub_;
+    ros::Publisher keypoints_pub_;
 
     ros::ServiceServer service_;
 
@@ -129,7 +131,8 @@ namespace jsk_pcl_ros
     virtual void
     computeCentroidsOfClusters(Vector4fVector& ret,
                                pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
-                               std::vector<pcl::PointIndices> cluster_indices);
+                               std::vector<pcl::PointIndices> cluster_indices,
+			       const std::string frame_id);
 
     virtual void subscribe();
     virtual void unsubscribe();

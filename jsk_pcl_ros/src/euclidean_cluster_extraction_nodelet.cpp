@@ -93,7 +93,7 @@ namespace jsk_pcl_ros
       // D[i][j] --> distance between the i-th previous cluster
       //             and the current j-th cluster
       Vector4fVector new_cogs;
-      computeCentroidsOfClusters(new_cogs, cloud, cluster_indices);
+      computeCentroidsOfClusters(new_cogs, cloud, cluster_indices, input->header.frame_id);
       double D[cogs_.size() * new_cogs.size()];
       computeDistanceMatrix(D, cogs_, new_cogs);
       std::vector<int> pivot_table = buildLabelTrackingPivotTable(D, cogs_, new_cogs, label_tracking_tolerance);
@@ -102,7 +102,7 @@ namespace jsk_pcl_ros
       }
     }
     Vector4fVector tmp_cogs;
-    computeCentroidsOfClusters(tmp_cogs, cloud, cluster_indices); // NB: not efficient
+    computeCentroidsOfClusters(tmp_cogs, cloud, cluster_indices, input->header.frame_id); // NB: not efficient
     cogs_ = tmp_cogs;
       
     for (size_t i = 0; i < cluster_indices.size(); i++) {
@@ -217,6 +217,7 @@ namespace jsk_pcl_ros
     ////////////////////////////////////////////////////////
     result_pub_ = advertise<jsk_recognition_msgs::ClusterPointIndices> (*pnh_, "output", 1);
     cluster_num_pub_ = advertise<jsk_recognition_msgs::Int32Stamped> (*pnh_, "cluster_num", 1);
+    keypoints_pub_ = advertise<geometry_msgs::PoseArray> (*pnh_, "output_keys", 1);
     service_ = pnh_->advertiseService(pnh_->resolveName("euclidean_clustering"),
                                       &EuclideanClustering::serviceCallback, this);
   }
@@ -342,11 +343,13 @@ namespace jsk_pcl_ros
   void EuclideanClustering::computeCentroidsOfClusters(
     Vector4fVector& ret,
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
-    std::vector<pcl::PointIndices> cluster_indices)
+    std::vector<pcl::PointIndices> cluster_indices,
+    const std::string frame_id)
   {
     pcl::ExtractIndices<pcl::PointXYZ> extract;
     extract.setInputCloud(cloud);
     ret.resize(cluster_indices.size());
+    geometry_msgs::PoseArray keypoints;
     for (size_t i = 0; i < cluster_indices.size(); i++)
     {
       // build pointcloud
@@ -361,7 +364,28 @@ namespace jsk_pcl_ros
       Eigen::Vector4f center;
       pcl::compute3DCentroid(*segmented_cloud, center);
       ret[i] = center;
+      geometry_msgs::Pose center_p;
+      center_p.position.x = center[0];
+      center_p.position.y = center[1];
+      center_p.position.z = center[2];
+      keypoints.poses.push_back(center_p);
+
+      Eigen::Vector4f points[2];
+      pcl::getMinMax3D(*cloud, points[0], points[1]);//min_p, max_p);
+      for(int i = 0; i < 2 ; i++){
+      	for(int j = 0; j < 2 ; j++){
+      	  for(int k = 0; k < 2 ; k++){
+      	    geometry_msgs::Pose center_p;
+      	    center_p.position.x = points[i][0];
+      	    center_p.position.y = points[j][1];
+      	    center_p.position.z = points[k][2];
+      	    keypoints.poses.push_back(center_p);
+      	  }
+      	}
+      }
     }
+    keypoints.header.frame_id = frame_id;
+    keypoints_pub_.publish(keypoints);
   }
   
 }
