@@ -47,7 +47,7 @@
 #include <message_filters/pass_through.h>
 #include <dynamic_reconfigure/server.h>
 #include <jsk_perception/FisheyeConfig.h>
-#include <opencv_apps/FlowArrayStamped.h>
+// #include <opencv_apps/FlowArrayStamped.h>
 #include <opencv2/opencv.hpp>
 
 namespace jsk_perception
@@ -68,7 +68,7 @@ namespace jsk_perception
     virtual void onInit();
     virtual void subscribe();
     virtual void unsubscribe();
-    virtual void toMask(const opencv_apps::FlowArrayStamped& flow_msg);
+    // virtual void toMask(const opencv_apps::FlowArrayStamped& flow_msg);
     virtual void cameraInfoCallback(const sensor_msgs::CameraInfo& camera_info_msg);
     
     boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> > sync_;

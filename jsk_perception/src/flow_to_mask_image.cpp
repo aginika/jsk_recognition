@@ -64,7 +64,7 @@ namespace jsk_perception
 
   void FlowToMaskImage::subscribe()
   {
-    sub_image_ = pnh_->subscribe("input", 1, &FlowToMaskImage::toMask, this);
+    //    sub_image_ = pnh_->subscribe("input", 1, &FlowToMaskImage::toMask, this);
     sub_camera_info_ = pnh_->subscribe("input/camera_info", 1, &FlowToMaskImage::cameraInfoCallback, this);
   }
 
@@ -80,29 +80,29 @@ namespace jsk_perception
     target_image_width_ = camera_info_msg.width;
   }
 
-  void FlowToMaskImage::toMask(const opencv_apps::FlowArrayStamped& flow_msg)
-  {
-    if (!(target_image_height_ && target_image_width_))
-      return;
+  // void FlowToMaskImage::toMask(const opencv_apps::FlowArrayStamped& flow_msg)
+  // {
+  //   if (!(target_image_height_ && target_image_width_))
+  //     return;
 
-    cv::Mat mask(target_image_height_, target_image_width_,  CV_8UC1);
-    for(int i = 0; i < flow_msg.flow.size(); i++){
-      int point_y = std::max(std::min (((int)flow_msg.flow[i].point.y + (int)flow_msg.flow[i].velocity.y), target_image_height_ - 1), 0);
-      int point_x = std::max(std::min (((int)flow_msg.flow[i].point.x + (int)flow_msg.flow[i].velocity.x), target_image_width_ - 1), 0);
+  //   cv::Mat mask(target_image_height_, target_image_width_,  CV_8UC1);
+  //   for(int i = 0; i < flow_msg.flow.size(); i++){
+  //     int point_y = std::max(std::min (((int)flow_msg.flow[i].point.y + (int)flow_msg.flow[i].velocity.y), target_image_height_ - 1), 0);
+  //     int point_x = std::max(std::min (((int)flow_msg.flow[i].point.x + (int)flow_msg.flow[i].velocity.x), target_image_width_ - 1), 0);
 
-      if(diff_threshold_ < sqrt(flow_msg.flow[i].velocity.y * flow_msg.flow[i].velocity.y + flow_msg.flow[i].velocity.x * flow_msg.flow[i].velocity.x)){
-	cv::rectangle(mask,
-		      cv::Point(point_x, point_y) - cv::Point(draw_rect_size_, draw_rect_size_),
-		      cv::Point(point_x, point_y) + cv::Point(draw_rect_size_, draw_rect_size_),
-		      255,
-		      CV_FILLED
-		      );
-      }
-    }
-    pub_mask_image_.publish(cv_bridge::CvImage(flow_msg.header,
-					       sensor_msgs::image_encodings::MONO8,
-					       mask).toImageMsg());
-  }
+  //     if(diff_threshold_ < sqrt(flow_msg.flow[i].velocity.y * flow_msg.flow[i].velocity.y + flow_msg.flow[i].velocity.x * flow_msg.flow[i].velocity.x)){
+  // 	cv::rectangle(mask,
+  // 		      cv::Point(point_x, point_y) - cv::Point(draw_rect_size_, draw_rect_size_),
+  // 		      cv::Point(point_x, point_y) + cv::Point(draw_rect_size_, draw_rect_size_),
+  // 		      255,
+  // 		      CV_FILLED
+  // 		      );
+  //     }
+  //   }
+  //   pub_mask_image_.publish(cv_bridge::CvImage(flow_msg.header,
+  // 					       sensor_msgs::image_encodings::MONO8,
+  // 					       mask).toImageMsg());
+  // }
 }
 
 
