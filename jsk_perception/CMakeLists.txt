@@ -45,6 +45,7 @@ generate_dynamic_reconfigure_options(
   cfg/HoughCircles.cfg
   cfg/ColorHistogramSlidingMatcher.cfg
   cfg/BackgroundSubstraction.cfg
+  cfg/Substraction.cfg
   cfg/GrabCut.cfg
   cfg/Fisheye.cfg
   cfg/SlidingWindowObjectDetector.cfg
@@ -97,6 +98,7 @@ jsk_perception_nodelet(src/sparse_image_encoder.cpp "jsk_perception/SparseImageE
 jsk_perception_nodelet(src/sparse_image_decoder.cpp "jsk_perception/SparseImageDecoder" "sparse_image_decoder")
 jsk_perception_nodelet(src/color_histogram.cpp "jsk_perception/ColorHistogram" "color_histogram")
 jsk_perception_nodelet(src/background_substraction_nodelet.cpp "jsk_perception/BackgroundSubstraction" "background_substraction")
+jsk_perception_nodelet(src/substraction_nodelet.cpp "jsk_perception/Substraction" "substraction")
 jsk_perception_nodelet(src/hough_circles.cpp "jsk_perception/HoughCircleDetector" "hough_circles")
 jsk_perception_nodelet(src/fisheye_to_panorama.cpp "jsk_perception/FisheyeToPanorama" "fisheye_to_panorama")
 jsk_perception_nodelet(src/grabcut_nodelet.cpp "jsk_perception/GrabCut" "grabcut")
