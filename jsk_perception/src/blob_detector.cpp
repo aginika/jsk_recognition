@@ -39,6 +39,12 @@
 #include <sensor_msgs/image_encodings.h>
 #include <jsk_perception/Labeling.h>
 
+cv::RNG rnd(1192);
+cv::Scalar randomColor()
+{
+  return cv::Scalar(rnd.next() & 0xFF, rnd.next() & 0xFF, rnd.next() & 0xFF);
+}
+
 namespace jsk_perception
 {
   void BlobDetector::onInit()
@@ -71,6 +77,9 @@ namespace jsk_perception
     boost::mutex::scoped_lock lock(mutex_);
     cv::Mat image = cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
     cv::Mat label(image.size(), CV_16SC1);
+
+    image.convertTo(image, CV_8UC1);
+    cv::threshold(image, image, 1, 255, CV_THRESH_BINARY);
     LabelingBS labeling;
     labeling.Exec(image.data, (short*)label.data, image.cols, image.rows,
                   true, min_area_);
@@ -81,6 +90,7 @@ namespace jsk_perception
         label_int.at<int>(j, i) = label.at<short>(j, i);
       }
     }
+
     pub_.publish(
       cv_bridge::CvImage(image_msg->header,
                          sensor_msgs::image_encodings::TYPE_32SC1,
