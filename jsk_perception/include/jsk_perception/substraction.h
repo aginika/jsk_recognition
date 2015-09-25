@@ -73,9 +73,8 @@ namespace jsk_perception
     ////////////////////////////////////////////////////////
     // ROS variables
     ////////////////////////////////////////////////////////
-    ros::Publisher sr_pub_;
-    ros::Publisher rs_pub_;
-    ros::Publisher both_pub_;
+    ros::Publisher sr_pub_, rs_pub_, both_pub_;
+    ros::Publisher sr_mask_pub_, rs_mask_pub_, both_mask_pub_; 
     image_transport::Subscriber sub_;
     image_transport::Subscriber bg_sub_;
     boost::shared_ptr<image_transport::ImageTransport> it_;
@@ -98,6 +97,8 @@ namespace jsk_perception
     int median_;
     int min_thres_;
     bool passthrough_;
+    bool mask_image_;
+    bool mask_pub_;
     double ratio_;
     
   private:

@@ -49,6 +49,8 @@ namespace jsk_perception
     pnh_->param("median", median_, 1);
     pnh_->param("passthrough", passthrough_, true);
     pnh_->param("min_thres", min_thres_, 7);
+    pnh_->param("mask_image", mask_image_, false);
+    pnh_->param("mask_pub", mask_pub_, false);
     srv_ = boost::make_shared <dynamic_reconfigure::Server<Config> > (*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind (
@@ -58,6 +60,13 @@ namespace jsk_perception
     sr_pub_ = advertise<sensor_msgs::Image>(*pnh_, "sr_output", 1);
     rs_pub_ = advertise<sensor_msgs::Image>(*pnh_, "rs_output", 1);
     both_pub_ = advertise<sensor_msgs::Image>(*pnh_, "both_output", 1);
+
+    if(mask_pub_){
+      sr_mask_pub_ = advertise<sensor_msgs::Image>(*pnh_, "sr_mask_output", 1);
+      rs_mask_pub_ = advertise<sensor_msgs::Image>(*pnh_, "rs_maskoutput", 1);
+      both_mask_pub_ = advertise<sensor_msgs::Image>(*pnh_, "both_mask_output", 1);
+    }
+
   }
 
   void Substraction::configCallback(Config& config, uint32_t level)
@@ -216,6 +225,43 @@ namespace jsk_perception
       bg_(image, sr_fg);
 #endif
     }
+
+    if(mask_image_)
+      {
+	cv::Mat sr_mask, rs_mask, both_mask;
+	cv::Mat tmp_sr, tmp_rs, tmp_both;
+	sr_fg.convertTo(tmp_sr, CV_8UC1);
+	rs_fg.convertTo(tmp_rs, CV_8UC1);
+	both_fg.convertTo(tmp_both, CV_8UC1);
+	cv::threshold(tmp_sr, sr_mask, 0, 255, CV_THRESH_BINARY);
+	cv::threshold(tmp_rs, rs_mask, 0, 255, CV_THRESH_BINARY);
+	cv::threshold(tmp_both, both_mask, 0, 255, CV_THRESH_BINARY);
+
+	cv_bridge::toCvCopy(image_msg, "16UC1")->image.copyTo(sr_fg, sr_mask);
+	bg_ptr->image.copyTo(rs_fg, rs_mask);
+	both_fg = sr_fg + rs_fg;
+
+	if(mask_pub_){
+	  sensor_msgs::Image::Ptr sr_mask_image
+	    = cv_bridge::CvImage(image_msg->header,
+				 sensor_msgs::image_encodings::MONO8,
+				 sr_mask).toImageMsg();
+	  sr_mask_pub_.publish(sr_mask_image);
+
+	  sensor_msgs::Image::Ptr rs_mask_image
+	    = cv_bridge::CvImage(image_msg->header,
+				 sensor_msgs::image_encodings::MONO8,
+				 rs_mask).toImageMsg();
+	  rs_mask_pub_.publish(rs_mask_image);
+
+	  sensor_msgs::Image::Ptr both_mask_image
+	    = cv_bridge::CvImage(image_msg->header,
+				 sensor_msgs::image_encodings::MONO8,
+				 both_mask).toImageMsg();
+	  both_mask_pub_.publish(both_mask_image);
+	}
+      }
+
     sensor_msgs::Image::Ptr sr_diff_image
       = cv_bridge::CvImage(image_msg->header,
 			   sensor_msgs::image_encodings::TYPE_16UC1,
