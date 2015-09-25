@@ -46,6 +46,7 @@ add_message_files(
   Line.msg
   ICPResult.msg
   ImageDifferenceValue.msg
+  PointCloudAndImage.msg
   # Flow3D.msg
   # Flow3DArray.msg
   # Flow3DArrayStamped.msg
