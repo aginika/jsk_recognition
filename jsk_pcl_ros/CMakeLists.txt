@@ -161,6 +161,7 @@ jsk_pcl_nodelet(src/keypoints_publisher_nodelet.cpp "jsk_pcl/KeypointsPublisher"
 jsk_pcl_nodelet(src/hinted_plane_detector_nodelet.cpp "jsk_pcl/HintedPlaneDetector" "hinted_plane_detector")
 # jsk_pcl_nodelet(src/pointcloud_throttle_nodelet.cpp "jsk_pcl/NodeletPointCloudThrottle" "point_cloud_throttle")
 jsk_pcl_nodelet(src/centroid_publisher_nodelet.cpp "jsk_pcl/CentroidPublisher" "centroid_publisher")
+jsk_pcl_nodelet(src/point_absorption_nodelet.cpp "jsk_pcl/PointAbsorption" "point_absorption")
 jsk_pcl_nodelet(src/fisheye_sphere_publisher_nodelet.cpp "jsk_pcl/FisheyeSpherePublisher" "fisheye_sphere_publisher")
 # jsk_pcl_nodelet(src/image_throttle_nodelet.cpp
 #   "jsk_pcl/NodeletImageThrottle" "image_throttle")
@@ -172,8 +173,8 @@ jsk_pcl_nodelet(src/plane_supported_cuboid_estimator_nodelet.cpp
   "jsk_pcl/PlaneSupportedCuboidEstimator" "plane_supported_cuboid_estimator")
 jsk_pcl_nodelet(src/extract_cuboid_particles_top_n_nodelet.cpp
   "jsk_pcl/ExtractCuboidParticlesTopN" "extract_cuboid_particles_top_n")
-jsk_pcl_nodelet(src/interactive_cuboid_likelihood_nodelet.cpp
-  "jsk_pcl/InteractiveCuboidLikelihood" "interactive_cuboid_likelihood")
+# jsk_pcl_nodelet(src/interactive_cuboid_likelihood_nodelet.cpp
+#   "jsk_pcl/InteractiveCuboidLikelihood" "interactive_cuboid_likelihood")
 jsk_pcl_nodelet(src/image_rotate_nodelet.cpp
   "jsk_pcl/ImageRotateNodelet" "image_rotate")
 jsk_pcl_nodelet(src/octree_change_publisher_nodelet.cpp
