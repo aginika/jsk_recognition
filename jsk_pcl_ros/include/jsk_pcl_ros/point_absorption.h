@@ -51,6 +51,11 @@
 #include <jsk_topic_tools/diagnostic_nodelet.h>
 #include <jsk_recognition_msgs/ModelCoefficientsArray.h>
 #include <pcl/filters/project_inliers.h>
+#include <pcl/io/obj_io.h>
+#include <pcl/TextureMesh.h>
+#include <pcl/surface/gp3.h>
+#include <pcl/surface/texture_mapping.h>
+#include <pcl/surface/organized_fast_mesh.h>
 
 
 namespace jsk_pcl_ros
@@ -63,6 +68,8 @@ namespace jsk_pcl_ros
     virtual void onInit();
     virtual void subscribe();
     virtual void unsubscribe();
+    virtual void createMesh(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud,
+			    const pcl::PointIndices::Ptr& indices);
     virtual void absorpt(const sensor_msgs::PointCloud2ConstPtr &input);
     virtual void getPolygon(const jsk_recognition_msgs::ModelCoefficientsArray &input);
     
@@ -78,6 +85,21 @@ namespace jsk_pcl_ros
     bool is_organized_;
     jsk_recognition_msgs::ModelCoefficientsArray coeffarr;
     std::vector<pcl::ModelCoefficients> mc_array;
+    bool store_shadow_faces_;
+
+    double triangle_pixel_size_;
+    double max_edge_length_;
+    double mu_;
+    double search_radius_;
+    int max_nn_;
+    double max_sur_angle_;
+    double min_an_;
+    double max_an_;
+    bool normal_consistensy_;
+    pcl::GreedyProjectionTriangulation<pcl::PointXYZRGBNormal> gp3;
+
+    // pcl::OrganizedFastMesh<pcl::PointXYZRGBNormal> ofm;
+    pcl::OrganizedFastMesh<pcl::PointXYZRGB> ofm;
   private:
   };
 }
