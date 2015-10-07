@@ -89,7 +89,9 @@ namespace jsk_perception
     bool detect_shadows_;
     int nmixtures_;
     double background_ratio_;
-    
+    int bilateral_d_;
+    double bilateral_sigma_color_;
+    double bilateral_sigma_space_;
   private:
     
   };

@@ -41,6 +41,9 @@ namespace jsk_perception
   {
     DiagnosticNodelet::onInit();
 
+    pnh_->param("bilateral_d", bilateral_d_, 11);
+    pnh_->param("bilateral_sigma_color", bilateral_sigma_color_, 40.0);
+    pnh_->param("bilateral_sigma_space", bilateral_sigma_space_, 200.0);
     srv_ = boost::make_shared <dynamic_reconfigure::Server<Config> > (*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind (
@@ -54,6 +57,10 @@ namespace jsk_perception
   void BackgroundSubstraction::configCallback(Config& config, uint32_t level)
   {
     boost::mutex::scoped_lock lock(mutex_);
+
+    bilateral_d_ = config.bilateral_d;
+    bilateral_sigma_color_ = config.bilateral_sigma_color;
+    bilateral_sigma_space_ = config.bilateral_sigma_space;
 #if CV_MAJOR_VERSION >= 3
     bg_ = cv::createBackgroundSubtractorMOG2();
 #else
@@ -117,10 +124,15 @@ namespace jsk_perception
     cv::Mat image = cv_ptr->image;
     cv::Mat fg;
     std::vector <std::vector<cv::Point > > contours;
+
+    cv::Mat image2;
+    cv::bilateralFilter(image, image2, bilateral_d_, bilateral_sigma_color_, bilateral_sigma_space_);
+    // if (bilateral_d_ %2 == 1)
+    //   cv::medianBlur(image, image2, bilateral_d_);
 #if CV_MAJOR_VERSION >= 3
-    bg_->apply(image, fg);
+    bg_->apply(image2, fg);
 #else
-    bg_(image, fg);
+    bg_(image2, fg);
 #endif
     sensor_msgs::Image::Ptr diff_image
       = cv_bridge::CvImage(image_msg->header,
