@@ -39,7 +39,17 @@
 #include <geometry_msgs/PointStamped.h>
 
 #include <pcl/common/centroid.h>
+#include <pcl/surface/gp3.h>
+#include <pcl/io/vtk_lib_io.h>
+#include <pcl/TextureMesh.h>
+#include <pcl/surface/texture_mapping.h>
+#include <pcl/surface/mls.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/io/obj_io.h>
+#include <pcl/io/png_io.h>
+#include <pcl/filters/filter.h>
 #include "jsk_pcl_ros/pcl_conversion_util.h"
+#include <pcl/point_types.h>
 
 namespace jsk_pcl_ros
 {
@@ -102,6 +112,10 @@ namespace jsk_pcl_ros
 	    mcp->values = mc_array[i].values;
 	    proj.setModelCoefficients (mcp);
 	    proj.filter (*cloud_projected);
+
+	    ROS_ERROR("Creating Mesh %d", i);
+	    createMesh(cloud_projected, inliers);
+	    ROS_ERROR("Creating Mesh done %d", i);
 	    // ROS_ERROR("Projected Size of %d  [ %d ] (MC_INDEX %d)", i ,(int)cloud_projected->points.size(), (int)mc_index_array[i].size());
 	    projected_cloud += *cloud_projected;
 	  }
@@ -182,6 +196,94 @@ namespace jsk_pcl_ros
     }
   }
 
+  void PointAbsorption::createMesh(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud,
+				   const pcl::PointIndices::Ptr& indices)
+  {
+    pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+    ne.setInputCloud (cloud);
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+    ne.setSearchMethod (tree);
+    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+    ne.setRadiusSearch (0.03);
+    ne.compute (*cloud_normals);
+
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr
+      all_cloud (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+    pcl::concatenateFields(*cloud, *cloud_normals, *all_cloud);
+
+    ROS_ERROR("Done NormalEstimate");
+
+    // pcl::PolygonMesh triangles;
+    // ofm.setInputCloud (cloud);
+    // ofm.setIndices(indices);
+    // ofm.reconstruct (triangles);
+    // pcl::io::savePolygonFileSTL("test.stl",triangles);
+
+    pcl::PolygonMesh triangles;
+    pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree2;
+    tree2.reset (new pcl::search::KdTree<pcl::PointXYZRGBNormal>);
+    tree2->setInputCloud (all_cloud);
+
+    // Set parameters
+    gp3.setInputCloud (all_cloud);
+    gp3.setSearchMethod (tree2);
+    // gp3.setSearchRadius (0.05);
+    // //gp3.setIndices(indices);
+    // gp3.setMu (3);
+    // gp3.setMaximumNearestNeighbors (100);
+    // gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
+    // gp3.setMinimumAngle(M_PI/18); // 10 degrees
+    // gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
+    // gp3.setNormalConsistency(false);
+
+    gp3.reconstruct (triangles);
+
+    // ROS_ERROR("Done Recostruct");
+    // pcl::PointCloud<pcl::PointXYZRGBNormal> extracted_cloud;
+    // pcl::ExtractIndices<pcl::PointXYZRGBNormal> extract;
+    // extract.setInputCloud (all_cloud);
+    // extract.setIndices (indices);
+    // extract.setNegative (true);
+    // extract.filter (extracted_cloud);
+    // pcl::PCLPointCloud2 output_source;
+    // toPCLPointCloud2 (extracted_cloud, output_source);
+
+    pcl::TextureMesh tex_mesh;
+    std::vector<std::string> tex_files;
+    tex_mesh.cloud = triangles.cloud;
+    tex_files.push_back("tex4.png");
+    tex_mesh.tex_polygons.push_back(triangles.polygons);
+
+    pcl::TextureMapping<pcl::PointXYZ> tm;
+    tm.setF(0.01);
+    tm.setVectorField(1, 0, 0);
+
+    pcl::TexMaterial tex_material;
+    tex_material.tex_Ka.r = 0.2f;
+    tex_material.tex_Ka.g = 0.2f;
+    tex_material.tex_Ka.b = 0.2f;
+
+    tex_material.tex_Kd.r = 0.8f;
+    tex_material.tex_Kd.g = 0.8f;
+    tex_material.tex_Kd.b = 0.8f;
+
+    tex_material.tex_Ks.r = 1.0f;
+    tex_material.tex_Ks.g = 1.0f;
+    tex_material.tex_Ks.b = 1.0f;
+    tex_material.tex_d = 1.0f;
+    tex_material.tex_Ns = 0.0f;
+    tex_material.tex_illum = 2;
+
+    tm.setTextureMaterials(tex_material);
+
+    tm.setTextureFiles(tex_files);
+    tm.mapTexture2MeshUV(tex_mesh);
+    ROS_ERROR("Done maptexture2mesh");
+
+    pcl::io::savePNGFile<pcl::PointXYZRGB>("tex4.png", *cloud);
+    pcl::io::saveOBJFile ("point_absorption.obj", tex_mesh);
+  }
+
   void PointAbsorption::getPolygon(const jsk_recognition_msgs::ModelCoefficientsArray &input)
   {
     boost::mutex::scoped_lock lock(mutex_);
@@ -214,6 +316,35 @@ namespace jsk_pcl_ros
     if(!is_organized_){
       pub_excluded_ = pnh_->advertise<sensor_msgs::PointCloud2>("output_excluded", 1);
     }
+    pnh_->param("triangle_pixel_size", triangle_pixel_size_, 3.0);
+    pnh_->param("max_edge_length", max_edge_length_, 4.5);
+    pnh_->param("store_shadow_faces", store_shadow_faces_, true);
+
+    ofm.setTrianglePixelSize (triangle_pixel_size_);
+    // ofm.setTriangulationType (pcl::OrganizedFastMesh<pcl::PointXYZRGBNormal>::TRIANGLE_ADAPTIVE_CUT);
+    ofm.setTriangulationType (pcl::OrganizedFastMesh<pcl::PointXYZRGB>::QUAD_MESH);
+    // ofm.setMaxEdgeLength(max_edge_length_);
+    // ofm.storeShadowedFaces(store_shadow_faces_);
+
+
+    pnh_->param("search_radius", search_radius_, 0.1);
+    pnh_->param("mu", mu_, 2.5);
+    pnh_->param("max_nn", max_nn_, 100);
+    pnh_->param("max_sur_angle", max_sur_angle_, M_PI/4);
+    pnh_->param("min_an", min_an_, M_PI/18);
+    pnh_->param("max_an", max_an_, 2*M_PI/3);
+    pnh_->param("normal_consistensy", normal_consistensy_, true);
+
+    gp3.setSearchRadius (search_radius_);
+    //gp3.setIndices(indices);
+    gp3.setMu (mu_);
+    gp3.setMaximumNearestNeighbors (max_nn_);
+    gp3.setMaximumSurfaceAngle(max_sur_angle_);//M_PI/4); // 45 degrees
+    gp3.setMinimumAngle(min_an_);//M_PI/18); // 10 degrees
+    gp3.setMaximumAngle(max_an_);//;2*M_PI/3); // 120 degrees
+    gp3.setNormalConsistency(normal_consistensy_);//false);
+
+
     subscribe();
   }
 }
