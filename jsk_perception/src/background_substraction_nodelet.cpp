@@ -51,7 +51,14 @@ namespace jsk_perception
     srv_->setCallback (f);
     
     image_pub_ = advertise<sensor_msgs::Image>(*pnh_, "output", 1);
+    image_pub2_ = advertise<sensor_msgs::Image>(*pnh_, "output_debug1", 1);
+    image_pub3_ = advertise<sensor_msgs::Image>(*pnh_, "output_debug2", 1);
+    image_pub4_ = advertise<sensor_msgs::Image>(*pnh_, "output_debug3", 1);
     
+    gamma_ = 2.0;
+    for (int i = 0; i < 256; i++){
+      LUT[i] = (int)(pow((double)i / 255.0, 1.0 / gamma_) * 255.0);
+    }
   }
 
   void BackgroundSubstraction::configCallback(Config& config, uint32_t level)
@@ -61,31 +68,34 @@ namespace jsk_perception
     bilateral_d_ = config.bilateral_d;
     bilateral_sigma_color_ = config.bilateral_sigma_color;
     bilateral_sigma_space_ = config.bilateral_sigma_space;
-#if CV_MAJOR_VERSION >= 3
-    bg_ = cv::createBackgroundSubtractorMOG2();
-#else
+    thresh_ = config.thresh;
+
+    gamma_ = config.gamma;
+    for (int i = 0; i < 256; i++){
+      LUT[i] = (int)(pow((double)i / 255.0, 1.0 / gamma_) * 255.0);
+    }
+
     bg_ = cv::BackgroundSubtractorMOG2();
-#endif
+    history_ = config.history;
+    background_ratio_ = config.background_ratio;
     nmixtures_ = config.nmixtures;
     detect_shadows_ = config.detect_shadows;
-#if CV_MAJOR_VERSION >= 3
-    bg_->setNMixtures(nmixtures_);
-#else
+    shadow_threshold_ = config.shadow_threshold;
+    shadow_value_ = config.shadow_value;
+    // var_threshold_ = config.var_threshold;
+    // bg_.set("var_threshold", var_threshold_);
+    bg_.set("fCT", complexity_reduction_threshold_);
+    bg_.set("fTau", shadow_threshold_);
+    // bg_.set("nShadowDetection", (uchar)shadow_value_);
+    bg_.set("backgroundRatio", background_ratio_);
+    bg_.set("history", history_);
     bg_.set("nmixtures", nmixtures_);
-#endif
+
     if (detect_shadows_) {
-#if CV_MAJOR_VERSION >= 3
-      bg_->setDetectShadows(1);
-#else
       bg_.set("detectShadows", 1);
-#endif
     }
     else {
-#if CV_MAJOR_VERSION >= 3
-      bg_->setDetectShadows(1);
-#else
       bg_.set("detectShadows", 0);
-#endif
     }
   }
   
@@ -121,12 +131,26 @@ namespace jsk_perception
     boost::mutex::scoped_lock lock(mutex_);
     cv_bridge::CvImagePtr cv_ptr
       = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::BGR8);
-    cv::Mat image = cv_ptr->image;
+    cv::Mat before_image = cv_ptr->image;
     cv::Mat fg;
     std::vector <std::vector<cv::Point > > contours;
 
+    cv::Mat image;
+    cv::LUT(before_image, cv::Mat(cv::Size(256, 1), CV_8U, LUT), image);
+    sensor_msgs::Image::Ptr lut_ros
+      = cv_bridge::CvImage(image_msg->header,
+                           sensor_msgs::image_encodings::BGR8,
+                           image).toImageMsg();
+    image_pub4_.publish(lut_ros);
+    
+
     cv::Mat image2;
     cv::bilateralFilter(image, image2, bilateral_d_, bilateral_sigma_color_, bilateral_sigma_space_);
+    sensor_msgs::Image::Ptr image2_ros
+      = cv_bridge::CvImage(image_msg->header,
+                           sensor_msgs::image_encodings::BGR8,
+                           image2).toImageMsg();
+    image_pub3_.publish(image2_ros);
     // if (bilateral_d_ %2 == 1)
     //   cv::medianBlur(image, image2, bilateral_d_);
 #if CV_MAJOR_VERSION >= 3
@@ -134,10 +158,18 @@ namespace jsk_perception
 #else
     bg_(image2, fg);
 #endif
-    sensor_msgs::Image::Ptr diff_image
+    sensor_msgs::Image::Ptr fg_ros
       = cv_bridge::CvImage(image_msg->header,
                            sensor_msgs::image_encodings::MONO8,
                            fg).toImageMsg();
+    image_pub2_.publish(fg_ros);
+
+    cv::Mat last;
+    cv::threshold(fg, last, thresh_, 0, cv::THRESH_TOZERO);
+    sensor_msgs::Image::Ptr diff_image
+      = cv_bridge::CvImage(image_msg->header,
+                           sensor_msgs::image_encodings::MONO8,
+                           last).toImageMsg();
     image_pub_.publish(diff_image);
   }
 }
