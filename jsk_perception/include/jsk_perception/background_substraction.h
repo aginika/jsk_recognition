@@ -72,6 +72,9 @@ namespace jsk_perception
     // ROS variables
     ////////////////////////////////////////////////////////
     ros::Publisher image_pub_;
+    ros::Publisher image_pub2_;
+    ros::Publisher image_pub3_;
+    ros::Publisher image_pub4_;
     image_transport::Subscriber sub_;
     boost::shared_ptr<image_transport::ImageTransport> it_;
     boost::shared_ptr<dynamic_reconfigure::Server<Config> > srv_;
@@ -88,8 +91,18 @@ namespace jsk_perception
 #endif
     bool detect_shadows_;
     int nmixtures_;
+    int history_;
     double background_ratio_;
-    
+    int bilateral_d_;
+    double bilateral_sigma_color_;
+    double bilateral_sigma_space_;
+    double thresh_;
+    double gamma_;
+    uchar LUT[256];
+    double complexity_reduction_threshold_;
+    double shadow_threshold_;
+    int shadow_value_;
+    double var_threshold_;
   private:
     
   };
