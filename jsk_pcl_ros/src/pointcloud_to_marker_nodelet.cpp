@@ -45,30 +45,89 @@ namespace jsk_pcl_ros
 {
   void PointCloudToMarker::extract(const sensor_msgs::PointCloud2ConstPtr& input)
   {
-    pcl::PointCloud<pcl::PointXYZ> cloud_xyz;
-    pcl::fromROSMsg(*input, cloud_xyz);
-    Eigen::Vector4f center;
-    pcl::compute3DCentroid(cloud_xyz, center);
-    if (publish_tf_) {
-      tf::Transform transform;
-      transform.setOrigin(tf::Vector3(center[0], center[1], center[2]));
-      transform.setRotation(tf::createIdentityQuaternion());
-      br_.sendTransform(tf::StampedTransform(transform, input->header.stamp,
-                                             input->header.frame_id, frame_));
+    pcl::PointCloud<pcl::PointXYZRGB> cloud;
+    pcl::fromROSMsg(*input, cloud);
+
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = input->header.frame_id;
+    marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
+    marker.scale.x = 1;
+    marker.scale.y = 1;
+    marker.scale.z = 1;
+
+    ROS_ERROR("Create Now.");
+    std::vector<geometry_msgs::Point> points;
+    std::vector<std_msgs::ColorRGBA> colors;
+    int counter=0;
+    for(int i = 0; i < cloud.width - 1; i++){
+      for(int j = 0; j < cloud.height - 1; j++){
+	counter++;
+	pcl::PointXYZRGB point;
+	geometry_msgs::Point pos;
+	std_msgs::ColorRGBA color;
+	
+	std::vector<int> indices;
+	indices.push_back(i);
+	indices.push_back(j);
+	indices.push_back(i);
+	indices.push_back(j+1);
+	indices.push_back(i+1);
+	indices.push_back(j+1);
+	indices.push_back(i);
+	indices.push_back(j);
+	indices.push_back(i+1);
+	indices.push_back(j+1);
+	indices.push_back(i+1);
+	indices.push_back(j);
+
+	for (int k = 0; k < 6 ; k++){
+	  point = cloud.at(indices[2*k], indices[2*k+1]);
+
+	  //Include NAN
+	  if(!pcl_isfinite (point.x) ||
+	     !pcl_isfinite (point.y) ||
+	     !pcl_isfinite (point.z)){
+	    for(int x = 0; x < k ; x++){
+	      points.pop_back();
+	      colors.pop_back();
+	    }
+	    counter--;
+	    break;
+	  }
+
+	  pos.x = point.x;
+	  pos.y = point.y;
+	  pos.z = point.z;
+
+	  //Too Far
+	  if(points.size() > 0 && k != 0){
+	    geometry_msgs::Point latest = points.back();
+	    geometry_msgs::Point diff;
+	    diff.x = pos.x - latest.x;
+	    diff.y = pos.y - latest.y;
+	    diff.z = pos.z - latest.z;
+	    if(sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z) > thres_){
+	      for(int x = 0; x < k ; x++){
+	  	points.pop_back();
+	  	colors.pop_back();
+	      }
+	      counter--;
+	      break;
+	    }
+	  }
+	    
+	  color.r = point.r/255.0;
+	  color.g = point.g/255.0;
+	  color.b = point.b/255.0;
+	  color.a = 1;
+	  points.push_back(pos);
+	  colors.push_back(color);
+	}
+      }
     }
-    geometry_msgs::PoseStamped pose;
-    pose.pose.orientation.w = 1.0;
-    pose.pose.position.x = center[0];
-    pose.pose.position.y = center[1];
-    pose.pose.position.z = center[2];
-    pose.header = input->header;
-    pub_pose_.publish(pose);
-    geometry_msgs::PointStamped point;
-    point.point.x = center[0];
-    point.point.y = center[1];
-    point.point.z = center[2];
-    point.header = input->header;
-    pub_point_.publish(point);
+    marker.points = points;
+    marker.colors = colors;
+    pub_.publish(marker);
   }
 
   void PointCloudToMarker::subscribe()
@@ -84,24 +143,9 @@ namespace jsk_pcl_ros
   void PointCloudToMarker::onInit(void)
   {
     DiagnosticNodelet::onInit();
-    pnh_->param("publish_tf", publish_tf_, false);
-    if (publish_tf_) {
-      if (!pnh_->getParam("frame", frame_))
-      {
-        JSK_ROS_WARN("~frame is not specified, using %s", getName().c_str());
-        frame_ = getName();
-      }
-      // do not use DiagnosticNodelet functionality when ~publish_tf is false
-      pub_pose_ = pnh_->advertise<geometry_msgs::PoseStamped>("output/pose", 1);
-      pub_point_ = pnh_->advertise<geometry_msgs::PointStamped>(
-        "output/point", 1);
-      subscribe();
-    }
-    else {
-      pub_pose_ = advertise<geometry_msgs::PoseStamped>(*pnh_, "output/pose", 1);
-      pub_point_ = advertise<geometry_msgs::PointStamped>(
-        *pnh_, "output/point", 1);
-    }
+    pnh_->param("thres", thres_, 1.0);
+    pub_ = pnh_->advertise<visualization_msgs::Marker>("output", 1);
+    subscribe();
   }
 }
 

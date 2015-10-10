@@ -41,7 +41,7 @@
 #include <ros/names.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <tf/transform_broadcaster.h>
-
+#include <visualization_msgs/Marker.h>
 // pcl
 #include <pcl_ros/pcl_nodelet.h>
 #include <pcl/point_types.h>
@@ -63,11 +63,8 @@ namespace jsk_pcl_ros
     virtual void extract(const sensor_msgs::PointCloud2ConstPtr &input);
     
     ros::Subscriber sub_input_;
-    tf::TransformBroadcaster br_;
-    std::string frame_;
-    bool publish_tf_;
-    ros::Publisher pub_pose_;
-    ros::Publisher pub_point_;
+    ros::Publisher pub_;
+    double thres_;
   private:
   };
 }

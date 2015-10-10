@@ -474,6 +474,14 @@
       publish the centroid of the pointcloud to /tf
     </description>
   </class>
+
+  <class name="jsk_pcl/PointCloudToMarker" type="jsk_pcl_ros::PointCloudToMarker"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      pointcloud to marker
+    </description>
+  </class>
+
   <class name="jsk_pcl/PointAbsorption" type="jsk_pcl_ros::PointAbsorption"
          base_class_type="nodelet::Nodelet">
     <description>
