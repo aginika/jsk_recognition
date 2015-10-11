@@ -468,6 +468,12 @@
     </description>
   </class>
 
+  <class name="jsk_pcl/NearestNeighborPoints" type="jsk_pcl_ros::NearestNeighborPoints"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      publish nn around query point
+    </description>
+  </class>
   <class name="jsk_pcl/CentroidPublisher" type="jsk_pcl_ros::CentroidPublisher"
          base_class_type="nodelet::Nodelet">
     <description>
