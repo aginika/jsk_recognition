@@ -59,8 +59,8 @@ namespace jsk_pcl_ros
     std::vector<geometry_msgs::Point> points;
     std::vector<std_msgs::ColorRGBA> colors;
     int counter=0;
-    for(int i = 0; i < cloud.width - 1; i++){
-      for(int j = 0; j < cloud.height - 1; j++){
+    for(int i = 0; i < cloud.width - (1+mesh_skip_); i+=(1+mesh_skip_)){
+      for(int j = 0; j < cloud.height - (1+mesh_skip_); j+=(1+mesh_skip_)){
 	counter++;
 	pcl::PointXYZRGB point;
 	geometry_msgs::Point pos;
@@ -70,14 +70,14 @@ namespace jsk_pcl_ros
 	indices.push_back(i);
 	indices.push_back(j);
 	indices.push_back(i);
-	indices.push_back(j+1);
-	indices.push_back(i+1);
-	indices.push_back(j+1);
+	indices.push_back(j+(1+mesh_skip_));
+	indices.push_back(i+(1+mesh_skip_));
+	indices.push_back(j+(1+mesh_skip_));
 	indices.push_back(i);
 	indices.push_back(j);
-	indices.push_back(i+1);
-	indices.push_back(j+1);
-	indices.push_back(i+1);
+	indices.push_back(i+(1+mesh_skip_));
+	indices.push_back(j+(1+mesh_skip_));
+	indices.push_back(i+(1+mesh_skip_));
 	indices.push_back(j);
 
 	for (int k = 0; k < 6 ; k++){
@@ -144,6 +144,7 @@ namespace jsk_pcl_ros
   {
     DiagnosticNodelet::onInit();
     pnh_->param("thres", thres_, 1.0);
+    pnh_->param("mesh_skip", mesh_skip_, 0);
     pub_ = pnh_->advertise<visualization_msgs::Marker>("output", 1);
     subscribe();
   }

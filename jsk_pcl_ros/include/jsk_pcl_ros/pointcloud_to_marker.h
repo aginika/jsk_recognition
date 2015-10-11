@@ -65,6 +65,7 @@ namespace jsk_pcl_ros
     ros::Subscriber sub_input_;
     ros::Publisher pub_;
     double thres_;
+    int mesh_skip_;
   private:
   };
 }
