@@ -135,6 +135,11 @@
     <description>
     </description>
   </class>
+  <class name="jsk_perception/BlueNoiseRejector" type="jsk_perception::BlueNoiseRejector"
+         base_class_type="nodelet::Nodelet">
+    <description>
+    </description>
+  </class>
   <class name="jsk_perception/GrabCut" type="jsk_perception::GrabCut"
          base_class_type="nodelet::Nodelet">
     <description>

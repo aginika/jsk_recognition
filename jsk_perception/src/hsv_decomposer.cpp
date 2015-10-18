@@ -93,6 +93,15 @@ namespace jsk_perception
     cv::Mat hue = hsv_planes[0];
     cv::Mat saturation = hsv_planes[1];
     cv::Mat value = hsv_planes[2];
+
+    cv::Mat denoised_hue;
+    double h = 3.0;
+    int template_window_size = 7;
+    int search_window_size = 21;
+    cv::fastNlMeansDenoising(hue, denoised_hue, h, template_window_size, search_window_size);
+    hue = denoised_hue;
+
+
     pub_h_.publish(cv_bridge::CvImage(
                      image_msg->header,
                      sensor_msgs::image_encodings::MONO8,

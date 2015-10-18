@@ -41,6 +41,12 @@ namespace jsk_perception
   {
     DiagnosticNodelet::onInit();
 
+    scale_ = 1.0;
+    gamma_ = 1.0;
+    use_bilateral_ = true;
+    use_lut_ = true;
+    times_ = 1;
+
     pnh_->param("bilateral_d", bilateral_d_, 11);
     pnh_->param("bilateral_sigma_color", bilateral_sigma_color_, 40.0);
     pnh_->param("bilateral_sigma_space", bilateral_sigma_space_, 200.0);
@@ -51,11 +57,10 @@ namespace jsk_perception
     srv_->setCallback (f);
     
     image_pub_ = advertise<sensor_msgs::Image>(*pnh_, "output", 1);
-    image_pub2_ = advertise<sensor_msgs::Image>(*pnh_, "output_debug1", 1);
-    image_pub3_ = advertise<sensor_msgs::Image>(*pnh_, "output_debug2", 1);
-    image_pub4_ = advertise<sensor_msgs::Image>(*pnh_, "output_debug3", 1);
-    
-    gamma_ = 2.0;
+    image_pub2_ = advertise<sensor_msgs::Image>(*pnh_, "after_lut", 1);
+    image_pub3_ = advertise<sensor_msgs::Image>(*pnh_, "after_bila", 1);
+    image_pub4_ = advertise<sensor_msgs::Image>(*pnh_, "after_diff", 1);
+
     for (int i = 0; i < 256; i++){
       LUT[i] = (int)(pow((double)i / 255.0, 1.0 / gamma_) * 255.0);
     }
@@ -64,6 +69,11 @@ namespace jsk_perception
   void BackgroundSubstraction::configCallback(Config& config, uint32_t level)
   {
     boost::mutex::scoped_lock lock(mutex_);
+
+    times_ = config.times;
+    use_bilateral_ = config.use_bilateral;
+    use_lut_ = config.use_lut;
+    scale_ = config.scale;
 
     bilateral_d_ = config.bilateral_d;
     bilateral_sigma_color_ = config.bilateral_sigma_color;
@@ -129,43 +139,78 @@ namespace jsk_perception
   {
     vital_checker_->poke();
     boost::mutex::scoped_lock lock(mutex_);
-    cv_bridge::CvImagePtr cv_ptr
-      = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::BGR8);
+    cv_bridge::CvImagePtr cv_ptr;
+    if(image_msg->encoding != "16UC1")
+      cv_ptr = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::BGR8);
+    else{
+      cv_ptr = cv_bridge::toCvCopy(image_msg, "16UC1");
+    }
+      
     cv::Mat before_image = cv_ptr->image;
+    if (image_msg->encoding == "16UC1")
+      before_image.convertTo(before_image, CV_8UC1);
     cv::Mat fg;
     std::vector <std::vector<cv::Point > > contours;
 
+
+    cv::Mat dst_imgUp, dst_imgDown;
+    if (scale_ != 1.0 && scale_ != 0.0){
+      cv::pyrDown(before_image, dst_imgDown, cv::Size(before_image.cols * scale_, before_image.rows * scale_));
+      before_image = dst_imgDown;
+    }
+
     cv::Mat image;
-    cv::LUT(before_image, cv::Mat(cv::Size(256, 1), CV_8U, LUT), image);
+    if(use_lut_){
+      cv::LUT(before_image, cv::Mat(cv::Size(256, 1), CV_8U, LUT), image);
+    }
+    else
+      image = before_image;
     sensor_msgs::Image::Ptr lut_ros
       = cv_bridge::CvImage(image_msg->header,
-                           sensor_msgs::image_encodings::BGR8,
-                           image).toImageMsg();
-    image_pub4_.publish(lut_ros);
+			   sensor_msgs::image_encodings::BGR8,
+			   image).toImageMsg();
+    image_pub2_.publish(lut_ros);
     
 
-    cv::Mat image2;
-    cv::bilateralFilter(image, image2, bilateral_d_, bilateral_sigma_color_, bilateral_sigma_space_);
+    if(use_bilateral_){
+      cv::Mat image2;
+      cv::bilateralFilter(image, image2, bilateral_d_, bilateral_sigma_color_, bilateral_sigma_space_);
+      image = image2;
+    }
+
+    if (scale_ != 1.0 && scale_ != 0.0){
+      cv::pyrUp(image, dst_imgUp, cv::Size(image.cols / scale_, image.rows / scale_));
+      image = dst_imgUp;
+    }
+
     sensor_msgs::Image::Ptr image2_ros
       = cv_bridge::CvImage(image_msg->header,
                            sensor_msgs::image_encodings::BGR8,
-                           image2).toImageMsg();
+                           image).toImageMsg();
     image_pub3_.publish(image2_ros);
     // if (bilateral_d_ %2 == 1)
     //   cv::medianBlur(image, image2, bilateral_d_);
 #if CV_MAJOR_VERSION >= 3
-    bg_->apply(image2, fg);
+    bg_->apply(image, fg);
 #else
-    bg_(image2, fg);
+    bg_(image, fg);
 #endif
     sensor_msgs::Image::Ptr fg_ros
       = cv_bridge::CvImage(image_msg->header,
                            sensor_msgs::image_encodings::MONO8,
                            fg).toImageMsg();
-    image_pub2_.publish(fg_ros);
+    image_pub4_.publish(fg_ros);
 
     cv::Mat last;
     cv::threshold(fg, last, thresh_, 0, cv::THRESH_TOZERO);
+
+    cv::Mat erode, dilate;
+    for(int i=0; i<times_; i++)
+      cv::erode(last, erode, cv::Mat(), cv::Point(-1,-1), 1);
+    for(int i=0; i<times_; i++)
+      cv::dilate(erode, dilate, cv::Mat(), cv::Point(-1,-1), 1);
+    last = dilate;
+
     sensor_msgs::Image::Ptr diff_image
       = cv_bridge::CvImage(image_msg->header,
                            sensor_msgs::image_encodings::MONO8,

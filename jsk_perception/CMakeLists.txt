@@ -105,6 +105,7 @@ jsk_perception_nodelet(src/flow_to_mask_image.cpp "jsk_perception/FlowToMaskImag
 jsk_perception_nodelet(src/grabcut_nodelet.cpp "jsk_perception/GrabCut" "grabcut")
 jsk_perception_nodelet(src/slic_superpixels.cpp "jsk_perception/SLICSuperPixels" "slic_super_pixels")
 jsk_perception_nodelet(src/rgb_decomposer.cpp "jsk_perception/RGBDecomposer" "rgb_decomposer")
+jsk_perception_nodelet(src/blue_noise_rejector.cpp "jsk_perception/BlueNoiseRejector" "blue_noise_rejector")
 jsk_perception_nodelet(src/hsv_decomposer.cpp "jsk_perception/HSVDecomposer" "hsv_decomposer")
 jsk_perception_nodelet(src/lab_decomposer.cpp "jsk_perception/LabDecomposer" "lab_decomposer")
 jsk_perception_nodelet(src/ycc_decomposer.cpp "jsk_perception/YCCDecomposer" "ycc_decomposer")

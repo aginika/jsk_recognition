@@ -103,7 +103,13 @@ namespace jsk_perception
     double shadow_threshold_;
     int shadow_value_;
     double var_threshold_;
+
+    bool use_bilateral_;
+    bool use_lut_;
+    double scale_;
+    int times_;
   private:
+
     
   };
 }
