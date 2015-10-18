@@ -114,7 +114,7 @@ namespace jsk_pcl_ros
 	    proj.filter (*cloud_projected);
 
 	    ROS_ERROR("Creating Mesh %d", i);
-	    createMesh(cloud_projected, inliers);
+	    //createMesh(cloud_projected, inliers);
 	    ROS_ERROR("Creating Mesh done %d", i);
 	    // ROS_ERROR("Projected Size of %d  [ %d ] (MC_INDEX %d)", i ,(int)cloud_projected->points.size(), (int)mc_index_array[i].size());
 	    projected_cloud += *cloud_projected;
@@ -172,7 +172,7 @@ namespace jsk_pcl_ros
 	    proj.setModelCoefficients (mcp);
 	    proj.filter (*cloud_projected);
 	    // ROS_ERROR("Projected Size of %d  [ %d ] (MC_INDEX %d)", i ,(int)cloud_projected->points.size(), (int)mc_index_array[i].size());
-
+	    createMesh(input, cloud, inliers);
 	    //Update PointCLoud
 	    projected_cloud += *cloud_projected;
 	    for(int j =0; j <mc_index_array[i].size(); j++){
@@ -196,92 +196,183 @@ namespace jsk_pcl_ros
     }
   }
 
-  void PointAbsorption::createMesh(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud,
+  void PointAbsorption::createMesh(const sensor_msgs::PointCloud2ConstPtr& input,
+				   const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& all_cloud,
 				   const pcl::PointIndices::Ptr& indices)
   {
-    pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
-    ne.setInputCloud (cloud);
-    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
-    ne.setSearchMethod (tree);
-    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
-    ne.setRadiusSearch (0.03);
-    ne.compute (*cloud_normals);
+    pcl::PointCloud<pcl::PointXYZRGB> cloud;
+    pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+    extract.setInputCloud (all_cloud);
+    extract.setIndices (indices);
+    extract.setNegative (true);
+    extract.setKeepOrganized(true);
+    extract.filter (cloud);
 
-    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr
-      all_cloud (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-    pcl::concatenateFields(*cloud, *cloud_normals, *all_cloud);
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = input->header.frame_id;
+    marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
+    marker.scale.x = 1;
+    marker.scale.y = 1;
+    marker.scale.z = 1;
 
-    ROS_ERROR("Done NormalEstimate");
+    ROS_ERROR("Create Now.");
+    std::vector<geometry_msgs::Point> points;
+    std::vector<std_msgs::ColorRGBA> colors;
+    int counter=0;
+    for(int i = 0; i < cloud.width - (1+mesh_skip_); i+=(1+mesh_skip_)){
+      for(int j = 0; j < cloud.height - (1+mesh_skip_); j+=(1+mesh_skip_)){
+	counter++;
+	pcl::PointXYZRGB point;
+	geometry_msgs::Point pos;
+	std_msgs::ColorRGBA color;
+	
+	std::vector<int> indices;
+	indices.push_back(i);
+	indices.push_back(j);
+	indices.push_back(i);
+	indices.push_back(j+(1+mesh_skip_));
+	indices.push_back(i+(1+mesh_skip_));
+	indices.push_back(j+(1+mesh_skip_));
+	indices.push_back(i);
+	indices.push_back(j);
+	indices.push_back(i+(1+mesh_skip_));
+	indices.push_back(j+(1+mesh_skip_));
+	indices.push_back(i+(1+mesh_skip_));
+	indices.push_back(j);
+
+	for (int k = 0; k < 6 ; k++){
+	  point = cloud.at(indices[2*k], indices[2*k+1]);
+
+	  //Include NAN
+	  if(!pcl_isfinite (point.x) ||
+	     !pcl_isfinite (point.y) ||
+	     !pcl_isfinite (point.z)){
+	    for(int x = 0; x < k ; x++){
+	      points.pop_back();
+	      colors.pop_back();
+	    }
+	    counter--;
+	    break;
+	  }
+
+	  pos.x = point.x;
+	  pos.y = point.y;
+	  pos.z = point.z;
+
+	  //Too Far
+	  if(points.size() > 0 && k != 0){
+	    geometry_msgs::Point latest = points.back();
+	    geometry_msgs::Point diff;
+	    diff.x = pos.x - latest.x;
+	    diff.y = pos.y - latest.y;
+	    diff.z = pos.z - latest.z;
+	    if(sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z) > thres_){
+	      for(int x = 0; x < k ; x++){
+	  	points.pop_back();
+	  	colors.pop_back();
+	      }
+	      counter--;
+	      break;
+	    }
+	  }
+	    
+	  color.r = point.r/255.0;
+	  color.g = point.g/255.0;
+	  color.b = point.b/255.0;
+	  color.a = 1;
+	  points.push_back(pos);
+	  colors.push_back(color);
+	}
+      }
+    }
+    marker.points = points;
+    marker.colors = colors;
+    pub_marker_.publish(marker);
+
+
+    // pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+    // ne.setInputCloud (cloud);
+    // pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+    // ne.setSearchMethod (tree);
+    // pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+    // ne.setRadiusSearch (0.03);
+    // ne.compute (*cloud_normals);
+
+    // pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr
+    //   all_cloud (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+    // pcl::concatenateFields(*cloud, *cloud_normals, *all_cloud);
+
+    // ROS_ERROR("Done NormalEstimate");
+
+    // // pcl::PolygonMesh triangles;
+    // // ofm.setInputCloud (cloud);
+    // // ofm.setIndices(indices);
+    // // ofm.reconstruct (triangles);
+    // // pcl::io::savePolygonFileSTL("test.stl",triangles);
 
     // pcl::PolygonMesh triangles;
-    // ofm.setInputCloud (cloud);
-    // ofm.setIndices(indices);
-    // ofm.reconstruct (triangles);
-    // pcl::io::savePolygonFileSTL("test.stl",triangles);
+    // pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree2;
+    // tree2.reset (new pcl::search::KdTree<pcl::PointXYZRGBNormal>);
+    // tree2->setInputCloud (all_cloud);
 
-    pcl::PolygonMesh triangles;
-    pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree2;
-    tree2.reset (new pcl::search::KdTree<pcl::PointXYZRGBNormal>);
-    tree2->setInputCloud (all_cloud);
+    // // Set parameters
+    // gp3.setInputCloud (all_cloud);
+    // gp3.setSearchMethod (tree2);
+    // // gp3.setSearchRadius (0.05);
+    // // //gp3.setIndices(indices);
+    // // gp3.setMu (3);
+    // // gp3.setMaximumNearestNeighbors (100);
+    // // gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
+    // // gp3.setMinimumAngle(M_PI/18); // 10 degrees
+    // // gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
+    // // gp3.setNormalConsistency(false);
 
-    // Set parameters
-    gp3.setInputCloud (all_cloud);
-    gp3.setSearchMethod (tree2);
-    // gp3.setSearchRadius (0.05);
-    // //gp3.setIndices(indices);
-    // gp3.setMu (3);
-    // gp3.setMaximumNearestNeighbors (100);
-    // gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
-    // gp3.setMinimumAngle(M_PI/18); // 10 degrees
-    // gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
-    // gp3.setNormalConsistency(false);
+    // gp3.reconstruct (triangles);
 
-    gp3.reconstruct (triangles);
+    // // ROS_ERROR("Done Recostruct");
+    // // pcl::PointCloud<pcl::PointXYZRGBNormal> extracted_cloud;
+    // // pcl::ExtractIndices<pcl::PointXYZRGBNormal> extract;
+    // // extract.setInputCloud (all_cloud);
+    // // extract.setIndices (indices);
+    // // extract.setNegative (true);
+    // // extract.filter (extracted_cloud);
+    // // pcl::PCLPointCloud2 output_source;
+    // // toPCLPointCloud2 (extracted_cloud, output_source);
 
-    // ROS_ERROR("Done Recostruct");
-    // pcl::PointCloud<pcl::PointXYZRGBNormal> extracted_cloud;
-    // pcl::ExtractIndices<pcl::PointXYZRGBNormal> extract;
-    // extract.setInputCloud (all_cloud);
-    // extract.setIndices (indices);
-    // extract.setNegative (true);
-    // extract.filter (extracted_cloud);
-    // pcl::PCLPointCloud2 output_source;
-    // toPCLPointCloud2 (extracted_cloud, output_source);
+    // pcl::TextureMesh tex_mesh;
+    // std::vector<std::string> tex_files;
+    // tex_mesh.cloud = triangles.cloud;
+    // tex_files.push_back("tex4.png");
+    // tex_mesh.tex_polygons.push_back(triangles.polygons);
 
-    pcl::TextureMesh tex_mesh;
-    std::vector<std::string> tex_files;
-    tex_mesh.cloud = triangles.cloud;
-    tex_files.push_back("tex4.png");
-    tex_mesh.tex_polygons.push_back(triangles.polygons);
+    // pcl::TextureMapping<pcl::PointXYZ> tm;
+    // tm.setF(0.01);
+    // tm.setVectorField(1, 0, 0);
 
-    pcl::TextureMapping<pcl::PointXYZ> tm;
-    tm.setF(0.01);
-    tm.setVectorField(1, 0, 0);
+    // pcl::TexMaterial tex_material;
+    // tex_material.tex_Ka.r = 0.2f;
+    // tex_material.tex_Ka.g = 0.2f;
+    // tex_material.tex_Ka.b = 0.2f;
 
-    pcl::TexMaterial tex_material;
-    tex_material.tex_Ka.r = 0.2f;
-    tex_material.tex_Ka.g = 0.2f;
-    tex_material.tex_Ka.b = 0.2f;
+    // tex_material.tex_Kd.r = 0.8f;
+    // tex_material.tex_Kd.g = 0.8f;
+    // tex_material.tex_Kd.b = 0.8f;
 
-    tex_material.tex_Kd.r = 0.8f;
-    tex_material.tex_Kd.g = 0.8f;
-    tex_material.tex_Kd.b = 0.8f;
+    // tex_material.tex_Ks.r = 1.0f;
+    // tex_material.tex_Ks.g = 1.0f;
+    // tex_material.tex_Ks.b = 1.0f;
+    // tex_material.tex_d = 1.0f;
+    // tex_material.tex_Ns = 0.0f;
+    // tex_material.tex_illum = 2;
 
-    tex_material.tex_Ks.r = 1.0f;
-    tex_material.tex_Ks.g = 1.0f;
-    tex_material.tex_Ks.b = 1.0f;
-    tex_material.tex_d = 1.0f;
-    tex_material.tex_Ns = 0.0f;
-    tex_material.tex_illum = 2;
+    // tm.setTextureMaterials(tex_material);
 
-    tm.setTextureMaterials(tex_material);
+    // tm.setTextureFiles(tex_files);
+    // tm.mapTexture2MeshUV(tex_mesh);
+    // ROS_ERROR("Done maptexture2mesh");
 
-    tm.setTextureFiles(tex_files);
-    tm.mapTexture2MeshUV(tex_mesh);
-    ROS_ERROR("Done maptexture2mesh");
-
-    pcl::io::savePNGFile<pcl::PointXYZRGB>("tex4.png", *cloud);
-    pcl::io::saveOBJFile ("point_absorption.obj", tex_mesh);
+    // pcl::io::savePNGFile<pcl::PointXYZRGB>("tex4.png", *cloud);
+    // pcl::io::saveOBJFile ("point_absorption.obj", tex_mesh);
   }
 
   void PointAbsorption::getPolygon(const jsk_recognition_msgs::ModelCoefficientsArray &input)
@@ -312,6 +403,7 @@ namespace jsk_pcl_ros
     pnh_->param("distance_thres", distance_thres_, 0.1);
     pnh_->param("is_organized", is_organized_, true);
     pub_ = pnh_->advertise<sensor_msgs::PointCloud2>("output", 1);
+    pub_marker_ = pnh_->advertise<visualization_msgs::Marker>("output_marker", 1);
     pub_included_ = pnh_->advertise<sensor_msgs::PointCloud2>("output_included", 1);
     if(!is_organized_){
       pub_excluded_ = pnh_->advertise<sensor_msgs::PointCloud2>("output_excluded", 1);
@@ -334,6 +426,9 @@ namespace jsk_pcl_ros
     pnh_->param("min_an", min_an_, M_PI/18);
     pnh_->param("max_an", max_an_, 2*M_PI/3);
     pnh_->param("normal_consistensy", normal_consistensy_, true);
+
+    pnh_->param("thres", thres_, 1.0);
+    pnh_->param("mesh_skip", mesh_skip_, 0);
 
     gp3.setSearchRadius (search_radius_);
     //gp3.setIndices(indices);

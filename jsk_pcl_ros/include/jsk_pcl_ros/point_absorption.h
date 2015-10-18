@@ -68,7 +68,8 @@ namespace jsk_pcl_ros
     virtual void onInit();
     virtual void subscribe();
     virtual void unsubscribe();
-    virtual void createMesh(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud,
+    virtual void createMesh(const sensor_msgs::PointCloud2ConstPtr& input,
+			    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud,
 			    const pcl::PointIndices::Ptr& indices);
     virtual void absorpt(const sensor_msgs::PointCloud2ConstPtr &input);
     virtual void getPolygon(const jsk_recognition_msgs::ModelCoefficientsArray &input);
@@ -81,6 +82,10 @@ namespace jsk_pcl_ros
     ros::Publisher pub_;
     ros::Publisher pub_excluded_;
     ros::Publisher pub_included_;
+    ros::Publisher pub_marker_;
+    double thres_;
+    int mesh_skip_;
+
     double distance_thres_;
     bool is_organized_;
     jsk_recognition_msgs::ModelCoefficientsArray coeffarr;
