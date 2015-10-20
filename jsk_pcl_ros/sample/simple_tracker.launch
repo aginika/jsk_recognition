@@ -1,0 +1,19 @@
+<launch>
+  <arg name="input_depth_image" default="depth/image" />
+  <arg name="input_rgb_image" default="rgb/image_rect_color" />
+  <arg name="input_point" default="depth/points" />
+  <arg name="input_info" default="rgb/camera_info" />
+
+  <node pkg="topic_tools" type="relay" name="select_relay" args="/selected_pointcloud /simple/selected_pointcloud"/>
+
+  <include file="$(find jsk_pcl_ros)/launch/tracking.launch">
+    <arg name="track_target_name" value="simple_result" />
+
+    <arg name="prefix" value="simple"/>
+    <arg name="input_point" value="/kinect_head/depth_registered/points" />
+    <arg name="voxel_grid_filter_limit_min" value="0.0"/>
+    <arg name="voxel_grid_filter_limit_max" value="5.0"/>
+    <arg name="voxel_grid_filter_field_name" value="true"/>
+    <arg name="voxel_grid_leaf_size" value="0.02"/>
+  </include>
+</launch>

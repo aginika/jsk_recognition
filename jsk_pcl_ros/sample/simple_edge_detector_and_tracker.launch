@@ -5,12 +5,11 @@
   <arg name="input_info" default="rgb/camera_info" />
 
   <node pkg="jsk_pcl_ros" type="border_estimator" name="border_estimator"
-	output="screen">
+  	output="screen">
     <remap from="~input" to="$(arg input_point)" />
     <remap from="~input_camera_info" to="$(arg input_info)" />
   </node>
 
-  <!-- edge detector -->
   <node pkg="jsk_perception" type="edge_detector" name="edge">
     <remap from="image" to="$(arg input_rgb_image)" />
   </node>
@@ -19,7 +18,6 @@
     <remap from="image" to="edge/image" />
   </node>
   
-  <!-- relay image to pcl_nodelet name space -->
   <node pkg="topic_tools" type="relay" name="edge_relay"
         args="in out">
     <remap from="in" to="edge/image"/>
@@ -42,7 +40,7 @@
   </group>
 
   <node pkg="nodelet" type="nodelet" name="indices_add"
-	args="standalone jsk_pcl/AddPointIndices">
+  	args="standalone jsk_pcl/AddPointIndices">
     <remap from="~input/src1" to="pcl_nodelet/mask2pi/output" />
     <remap from="~input/src2" to="border_estimator/output_border_indices" />
     <rosparam>
@@ -54,7 +52,7 @@
   </node>
 
   <node pkg="nodelet" type="nodelet" name="added"
-	args="standalone pcl/ExtractIndices">
+  	args="standalone pcl/ExtractIndices">
     <remap from="~input" to="$(arg input_point)" />
     <remap from="~indices" to="pcl_nodelet/mask2pi/output" />
     <rosparam>
@@ -66,8 +64,10 @@
   </node>
 
   <include file="$(find jsk_pcl_ros)/launch/tracking.launch">
-    <arg name="input_point" value="added/output" />
-    <!-- <arg name="input_point" default="/pcl_nodelet/candidate_points/output" /> -->
+    <!-- <arg name="input_point" value="/kinect_head/depth_registered/points" /> -->
+    <arg name="track_target_name" value="edge_result" />
+    <arg name="prefix" value="edge"/>
+    <arg name="input_point" default="/added/output" />
     <arg name="voxel_grid_filter_limit_min" value="0.0"/>
     <arg name="voxel_grid_filter_limit_max" value="5.0"/>
     <arg name="voxel_grid_filter_field_name" value="true"/>
