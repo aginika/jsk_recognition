@@ -4,44 +4,44 @@ find_package(catkin REQUIRED
   std_msgs sensor_msgs geometry_msgs message_generation pcl_msgs)
 add_message_files(
   FILES
-  PlotData.msg
-  HeightmapConfig.msg
-  SimpleOccupancyGrid.msg
-  SimpleOccupancyGridArray.msg
-  PolygonArray.msg
+  BoundingBoxArray.msg
+  BoundingBoxMovement.msg
+  BoundingBox.msg
+  Circle2DArray.msg
+  Circle2D.msg
+  ClassificationResult.msg
   ClusterPointIndices.msg
+  ColorHistogramArray.msg
+  ColorHistogram.msg
+  DepthCalibrationParameter.msg
+  DepthErrorResult.msg
+  HeightmapConfig.msg
+  Histogram.msg
+  HistogramWithRangeBin.msg
+  HistogramWithRange.msg
+  ICPResult.msg
+  ImageDifferenceValue.msg
+  Int32Stamped.msg
+  LineArray.msg
+  Line.msg
+  ModelCoefficientsArray.msg
   ParallelEdgeArray.msg
   ParallelEdge.msg
-  TimeRange.msg
-  Rect.msg
-  RectArray.msg
-  SparseOccupancyGridCell.msg
-  Circle2DArray.msg
-  BoundingBox.msg
-  SparseOccupancyGridColumn.msg
-  SparseOccupancyGrid.msg
-  Histogram.msg
-  HistogramWithRange.msg
-  HistogramWithRangeBin.msg
-  ColorHistogram.msg
-  DepthErrorResult.msg
-  BoundingBoxArray.msg
+  PlotData.msg
   PointsArray.msg
-  Torus.msg
-  SlicedPointCloud.msg
-  LineArray.msg
+  PolygonArray.msg
   PosedCameraInfo.msg
-  TorusArray.msg
-  RotatedRectStamped.msg
-  ModelCoefficientsArray.msg
+  RectArray.msg
+  Rect.msg
   RotatedRect.msg
-  DepthCalibrationParameter.msg
-  Int32Stamped.msg
-  BoundingBoxMovement.msg
+  RotatedRectStamped.msg
+  SimpleHandle.msg
+  SimpleOccupancyGridArray.msg
+  SimpleOccupancyGrid.msg
+  SlicedPointCloud.msg
   SnapItRequest.msg
-  Circle2D.msg
-  SparseOccupancyGridArray.msg
   SparseImage.msg
+# <<<<<<< HEAD
   ColorHistogramArray.msg
   Line.msg
   ICPResult.msg
@@ -51,6 +51,16 @@ add_message_files(
   # Flow3DArray.msg
   # Flow3DArrayStamped.msg
   SimpleHandle.msg
+# =======
+  SparseOccupancyGridArray.msg
+  SparseOccupancyGridCell.msg
+  SparseOccupancyGridColumn.msg
+  SparseOccupancyGrid.msg
+  TimeRange.msg
+  TorusArray.msg
+  Torus.msg
+  WeightedPoseArray.msg
+# >>>>>>> 2e0daddb5c64a7e082424f3f160ad9e5038ea83f
   )
 
 generate_messages(
