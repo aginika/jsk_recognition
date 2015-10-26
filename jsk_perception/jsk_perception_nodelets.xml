@@ -19,6 +19,10 @@
          type="jsk_perception::MaskImageToRect"
          base_class_type="nodelet::Nodelet">
   </class>
+  <class name="jsk_perception/DepthImageCompletion"
+         type="jsk_perception::DepthImageCompletion"
+         base_class_type="nodelet::Nodelet">
+  </class>
   <class name="jsk_perception/MaskImageToROI"
          type="jsk_perception::MaskImageToROI"
          base_class_type="nodelet::Nodelet">
