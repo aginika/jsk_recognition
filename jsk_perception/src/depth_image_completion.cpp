@@ -88,18 +88,15 @@ namespace jsk_perception
 	  //bool reverse = false;
 	  //interpolate depth pixels...
 	  unsigned short start_pixel = 0;
-
 	  if (zero_start < 10 && x > mask.rows - 10){
 	    zero_flag = false;
 	    zero_start = -1;
 	    continue;
 	  }
-
 	  if(zero_start - 1 >= 0)
 	    start_pixel = x_img.at<unsigned short>(y, zero_start - 1);
 	  else if(y != 0)
 	    start_pixel = x_img.at<unsigned short>(y - 1, zero_start);
-
 	  unsigned short end_pixel = 0;
 	  if(x + 1 <  mask.cols && x > 0){
 	    end_pixel = x_img.at<unsigned short>(y, x);
