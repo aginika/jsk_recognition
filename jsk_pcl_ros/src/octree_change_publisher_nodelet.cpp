@@ -43,8 +43,8 @@ namespace jsk_pcl_ros
     ConnectionBasedNodelet::onInit();
     counter_ = 0;
 
-    pnh_->param("resolution", resolution_, 0.02);
-    pnh_->param("noise_filter", noise_filter_, 2);
+    pnh_->param("resolution", resolution_, 0.1);
+    pnh_->param("noise_filter", noise_filter_, 10);
 
     srv_ = boost::make_shared <dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
