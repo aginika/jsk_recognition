@@ -71,7 +71,9 @@ namespace jsk_pcl_ros
     pcl::ConditionalRemoval<pcl::PointXYZRGB> filter_instance_;
     message_filters::Subscriber<sensor_msgs::PointCloud2> sub_input_;
     message_filters::Subscriber<PCLIndicesMsg> sub_indices_;
-    ros::Publisher pub_;
+    ros::Publisher pub_r_;
+    ros::Publisher pub_g_;
+    ros::Publisher pub_b_;
     boost::shared_ptr <dynamic_reconfigure::Server<Config> > srv_;
     virtual void configCallback(Config &config, uint32_t level) = 0;
     virtual void updateCondition() = 0;

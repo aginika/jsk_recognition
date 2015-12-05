@@ -50,7 +50,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 
 # For kinfu
-find_package(PCL QUIET COMPONENTS gpu_kinfu_large_scale)
+#find_package(PCL QUIET COMPONENTS gpu_kinfu_large_scale)
 
 find_package(PkgConfig)
 pkg_check_modules(yaml_cpp yaml-cpp REQUIRED)
@@ -286,12 +286,6 @@ jsk_pcl_nodelet(src/region_growing_multiple_plane_segmentation_nodelet.cpp
   "jsk_pcl/RegionGrowingMultiplePlaneSegmentation"
   "region_growing_multiple_plane_segmentation")
 
-if(NOT $ENV{ROS_DISTRO} STREQUAL "groovy")
-  IF(${PCL_VERSION} VERSION_GREATER "1.7.2")
-    jsk_pcl_nodelet(src/organized_edge_detector_nodelet.cpp
-      "jsk_pcl/OrganizedEdgeDetector" "organized_edge_detector")
-  ENDIF(${PCL_VERSION} VERSION_GREATER "1.7.2")
-endif(NOT $ENV{ROS_DISTRO} STREQUAL "groovy")
 
 jsk_pcl_nodelet(src/edge_depth_refinement_nodelet.cpp
   "jsk_pcl/EdgeDepthRefinement" "edge_depth_refinement")
@@ -397,11 +391,11 @@ jsk_pcl_nodelet(src/heightmap_time_accumulation_nodelet.cpp
   "jsk_pcl/HeightmapTimeAccumulation" "heightmap_time_accumulation")
 jsk_pcl_nodelet(src/voxel_grid_large_scale_nodelet.cpp
   "jsk_pcl/VoxelGridLargeScale" "voxel_grid_large_scale")
-if (PCL_GPU_KINFU_LARGE_SCALE_FOUND)
-  jsk_pcl_nodelet(src/kinfu_nodelet.cpp
-    "jsk_pcl/Kinfu" "kinfu")
-  include_directories(/usr/local/cuda/include)
-endif (PCL_GPU_KINFU_LARGE_SCALE_FOUND)
+# if (PCL_GPU_KINFU_LARGE_SCALE_FOUND)
+#   jsk_pcl_nodelet(src/kinfu_nodelet.cpp
+#     "jsk_pcl/Kinfu" "kinfu")
+#   include_directories(/usr/local/cuda/include)
+# endif (PCL_GPU_KINFU_LARGE_SCALE_FOUND)
 jsk_pcl_nodelet(src/pcd_reader_with_pose_nodelet.cpp
   "jsk_pcl/PCDReaderWithPose" "pcd_reader_with_pose")
 # check existence of robot_self_filter package because robot_self_filter is not installed by apt
@@ -422,16 +416,16 @@ add_library(jsk_pcl_ros_moveit SHARED src/pointcloud_moveit_filter.cpp)
 add_library(jsk_pcl_ros SHARED ${jsk_pcl_nodelet_sources})
 add_library(jsk_pcl_ros_util SHARED ${jsk_pcl_util_nodelet_sources})
 target_link_libraries(jsk_pcl_ros_util jsk_pcl_ros_base)
-if (PCL_GPU_KINFU_LARGE_SCALE_FOUND)
+# if (PCL_GPU_KINFU_LARGE_SCALE_FOUND)
+#   target_link_libraries(jsk_pcl_ros
+#     ${PCL_GPU_KINFU_LARGE_SCALE_LIBRARY}
+#     ${catkin_LIBRARIES} ${pcl_ros_LIBRARIES} ${OpenCV_LIBRARIES} yaml-cpp
+#     jsk_pcl_ros_base)
+# else (PCL_GPU_KINFU_LARGE_SCALE_FOUND)
   target_link_libraries(jsk_pcl_ros
-    ${PCL_GPU_KINFU_LARGE_SCALE_LIBRARY}
     ${catkin_LIBRARIES} ${pcl_ros_LIBRARIES} ${OpenCV_LIBRARIES} yaml-cpp
     jsk_pcl_ros_base)
-else (PCL_GPU_KINFU_LARGE_SCALE_FOUND)
-  target_link_libraries(jsk_pcl_ros
-    ${catkin_LIBRARIES} ${pcl_ros_LIBRARIES} ${OpenCV_LIBRARIES} yaml-cpp
-    jsk_pcl_ros_base)
-endif (PCL_GPU_KINFU_LARGE_SCALE_FOUND)
+# endif (PCL_GPU_KINFU_LARGE_SCALE_FOUND)
 if (robot_self_filter_FOUND)
   include_directories(include ${robot_self_filter_INCLUDE_DIRS})
   target_link_libraries(jsk_pcl_ros ${robot_self_filter_LIBRARIES})

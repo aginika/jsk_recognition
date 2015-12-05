@@ -213,21 +213,62 @@ namespace jsk_pcl_ros
   {
 
     boost::mutex::scoped_lock lock (mutex_);
-    pcl::PointCloud<pcl::PointXYZRGB> tmp_in, tmp_out;
-    sensor_msgs::PointCloud2 out;
+    pcl::PointCloud<pcl::PointXYZRGB> tmp_in, tmp_out_r, tmp_out_g, tmp_out_b;
+    sensor_msgs::PointCloud2 out_r, out_g, out_b;
     fromROSMsg(*input, tmp_in);
 
-    filter_instance_.setInputCloud (tmp_in.makeShared());
-    if (indices) {
-      pcl::IndicesPtr vindices;
-      vindices.reset(new std::vector<int> (indices->indices));
-      filter_instance_.setIndices(vindices);
+    // filter_instance_.setInputCloud (tmp_in.makeShared());
+    // if (indices) {
+    //   pcl::IndicesPtr vindices;
+    //   vindices.reset(new std::vector<int> (indices->indices));
+    //   filter_instance_.setIndices(vindices);
+    // }
+    // filter_instance_.filter(tmp_out);
+
+
+    for(int i = 0; i< tmp_in.points.size(); i++){
+      pcl::PointXYZRGB p = tmp_in.points[i];
+      if (p.r != 0){
+        pcl::PointXYZRGB tmp;
+        tmp.r = p.r;
+        tmp.g = 0;
+        tmp.b = 0;
+        tmp.x = p.x;
+        tmp.y = p.y;
+        tmp.z = p.z;
+        tmp_out_r.points.push_back(tmp);
+      }
+      if (p.g != 0){
+        pcl::PointXYZRGB tmp;
+        tmp.r = 0;
+        tmp.g = p.g;
+        tmp.b = 0;
+        tmp.x = p.x;
+        tmp.y = p.y;
+        tmp.z = p.z;
+        tmp_out_g.points.push_back(tmp);
+      }
+      if (p.b != 0){
+        pcl::PointXYZRGB tmp;
+        tmp.r = 0;
+        tmp.g = 0;
+        tmp.b = p.b;
+        tmp.x = p.x;
+        tmp.y = p.y;
+        tmp.z = p.z;
+        tmp_out_b.points.push_back(tmp);
+      }
     }
-    filter_instance_.filter(tmp_out);
-    if (tmp_out.points.size() > 0) {
-      toROSMsg(tmp_out, out);
-      pub_.publish(out);
-    }
+
+    toROSMsg(tmp_out_r, out_r);
+    toROSMsg(tmp_out_g, out_g);
+    toROSMsg(tmp_out_b, out_b);
+    out_r.header.frame_id="/base_link";
+    out_g.header.frame_id="/base_link";
+    out_b.header.frame_id="/base_link";
+    pub_r_.publish(out_r);
+    pub_g_.publish(out_g);
+    pub_b_.publish(out_b);
   }
 
   template <class PackedComparison, typename Config>
@@ -244,7 +285,9 @@ namespace jsk_pcl_ros
     filter_instance_ = pcl::ConditionalRemoval<pcl::PointXYZRGB>(true);
     updateCondition();
     pnh_->param("use_indices", use_indices_, false);
-    pub_ = advertise<sensor_msgs::PointCloud2>(*pnh_, "output", 1);
+    pub_r_ = advertise<sensor_msgs::PointCloud2>(*pnh_, "output_r", 1);
+    pub_g_ = advertise<sensor_msgs::PointCloud2>(*pnh_, "output_g", 1);
+    pub_b_ = advertise<sensor_msgs::PointCloud2>(*pnh_, "output_b", 1);
 
     srv_ = boost::make_shared <dynamic_reconfigure::Server<Config> > (*pnh_);
     typename dynamic_reconfigure::Server<Config>::CallbackType f =
