@@ -374,8 +374,10 @@ namespace jsk_pcl_ros
   void AttentionClipper::clipPointcloud(
     const sensor_msgs::PointCloud2::ConstPtr& msg)
   {
+    ROS_ERROR("clipPointcloud");
     boost::mutex::scoped_lock lock(mutex_);
-    JSK_NODELET_DEBUG("clipPointcloud");
+    ROS_ERROR("clipPointcloud2");
+    NODELET_ERROR("HERE");
     vital_checker_->poke();
     try {
       // 1. transform pointcloud
@@ -384,6 +386,7 @@ namespace jsk_pcl_ros
       pcl::PointIndices::Ptr all_indices (new pcl::PointIndices);
       jsk_recognition_msgs::ClusterPointIndices cluster_indices_msg;
       std::map<std::string, tf::StampedTransform> transforms;
+      transformed_pose_list_.clear();
       for (size_t i = 0; i < pose_list_.size(); i++) {
         std::string frame_id = frame_id_list_[i];
         // check transform cache
@@ -403,6 +406,7 @@ namespace jsk_pcl_ros
           cloud(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::fromROSMsg(*msg, *cloud);
         pcl::CropBox<pcl::PointXYZ> crop_box(false);
+        NODELET_ERROR("HERE2");
         pcl::PointIndices::Ptr indices (new pcl::PointIndices);
         JSK_NODELET_DEBUG("max_points: [%f, %f, %f]", dimensions_[i][0]/2,
                       dimensions_[i][1]/2,
@@ -431,6 +435,8 @@ namespace jsk_pcl_ros
         crop_box.filter(indices->indices);
         // indices->indices may include NaN and inf points
         // https://github.com/jsk-ros-pkg/jsk_recognition/issues/888
+        NODELET_ERROR("HERE3");
+
         pcl::PointIndices non_nan_indices;
         for (size_t j = 0; j < indices->indices.size(); j++) {
           pcl::PointXYZ p = cloud->points[indices->indices[j]];
@@ -467,7 +473,7 @@ namespace jsk_pcl_ros
       publishBoundingBox(msg->header);
     }
     catch (std::runtime_error &e) {
-      NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
+      NODELET_ERROR("[%s] AAA Transform error: %s", __PRETTY_FUNCTION__, e.what());
     } 
   }
 
@@ -524,7 +530,7 @@ namespace jsk_pcl_ros
       publishBoundingBox(msg->header);
     }
     catch (std::runtime_error &e) {
-      NODELET_ERROR("[%s] Transform error: %s", __PRETTY_FUNCTION__, e.what());
+      NODELET_ERROR("[%s] bb Transform error: %s", __PRETTY_FUNCTION__, e.what());
     } 
   }
 
