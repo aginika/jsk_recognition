@@ -46,6 +46,8 @@ namespace jsk_perception
     DiagnosticNodelet::onInit();
     pub_ = advertise<sensor_msgs::Image>(
       *pnh_, "output", 1);
+    pub_mask_ = advertise<sensor_msgs::Image>(
+      *pnh_, "output_mask", 1);
   }
 
   void ColorizeLabels::subscribe()
@@ -85,6 +87,16 @@ namespace jsk_perception
         label_image_msg->header,
         sensor_msgs::image_encodings::BGR8,
         output_image).toImageMsg());
+
+    cv::Mat tmp_image, last_image;
+    cv::cvtColor(output_image, tmp_image, cv::COLOR_BGR2GRAY);
+    cv::threshold(tmp_image, last_image, 0, 255, CV_THRESH_BINARY);
+
+    pub_mask_.publish(
+      cv_bridge::CvImage(
+        label_image_msg->header,
+        sensor_msgs::image_encodings::MONO8,
+        last_image).toImageMsg());
   }
 }
 

@@ -54,6 +54,8 @@ namespace jsk_perception
     pub_mask_ = advertise<sensor_msgs::Image>(
       *pnh_, "output/mask", 1);
 
+    pub_inc_mask_ = advertise<sensor_msgs::Image>(*pnh_, "output/inc_mask", 1);
+
   }
 
   void ApplyMaskImage::subscribe()
@@ -159,6 +161,9 @@ namespace jsk_perception
         bitwise_not(mask, revert_masked_image);
       }
 
+
+      raw_masked_image_ = masked_image;
+
       if (isBGRA(image_msg->encoding)) {
         if(use_prev_image_){
           if(prev_image_.rows > 0){
@@ -194,6 +199,30 @@ namespace jsk_perception
         masked_image.copyTo(output_image);
       }
 
+      if(use_prev_image_){
+        if(prev_revert_masked_image_.rows > 0){
+          cv::Mat diff_mask;
+          cv::Mat masked_image_mask;
+          cv::Mat previous_masked_image_mask;
+
+
+          cv::Mat tmp_masked_image_mask;
+          cv::Mat tmp_prev_masked_image_mask;
+          cv::cvtColor(masked_image, tmp_masked_image_mask, cv::COLOR_BGR2GRAY);
+          cv::cvtColor(prev_image_, tmp_prev_masked_image_mask, cv::COLOR_BGR2GRAY);
+
+          cv::threshold(tmp_masked_image_mask, masked_image_mask, 0, 255, CV_THRESH_BINARY);
+          cv::threshold(tmp_prev_masked_image_mask, previous_masked_image_mask, 0, 255, CV_THRESH_BINARY);
+          //cv::subtract(previous_masked_image_mask, masked_image_mask,  diff_mask);
+          bitwise_xor(previous_masked_image_mask, masked_image_mask,  diff_mask);
+          bitwise_not(diff_mask, diff_mask);
+
+          pub_inc_mask_.publish(cv_bridge::CvImage(image_msg->header,
+                                                   "mono8",
+                                                   diff_mask).toImageMsg());
+        }
+        prev_revert_masked_image_ = mask;
+      }
 
       pub_image_.publish(cv_bridge::CvImage(
             image_msg->header,

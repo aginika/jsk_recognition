@@ -76,8 +76,11 @@ namespace jsk_perception
     message_filters::Subscriber<sensor_msgs::Image> sub_mask_;
     ros::Publisher pub_image_;
     ros::Publisher pub_mask_;
+    ros::Publisher pub_inc_mask_;
 
     cv::Mat prev_image_;
+    cv::Mat prev_revert_masked_image_;
+    cv::Mat raw_masked_image_;
   private:
     
   };

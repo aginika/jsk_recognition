@@ -54,6 +54,7 @@ namespace jsk_perception
       const sensor_msgs::Image::ConstPtr& label_image);
 
     ros::Publisher pub_;
+    ros::Publisher pub_mask_;
     ros::Subscriber sub_;
   private:
     
