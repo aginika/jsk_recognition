@@ -43,6 +43,7 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <opencv2/opencv.hpp>
 
 namespace jsk_perception
 {
@@ -67,13 +68,16 @@ namespace jsk_perception
 
     bool approximate_sync_;
     bool mask_black_to_transparent_;
+    bool clip_region_;
+    bool use_prev_image_;
     boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> > sync_;
     boost::shared_ptr<message_filters::Synchronizer<ApproximateSyncPolicy> > async_;
     message_filters::Subscriber<sensor_msgs::Image> sub_image_;
     message_filters::Subscriber<sensor_msgs::Image> sub_mask_;
     ros::Publisher pub_image_;
     ros::Publisher pub_mask_;
-    
+
+    cv::Mat prev_image_;
   private:
     
   };

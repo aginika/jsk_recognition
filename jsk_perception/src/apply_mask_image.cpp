@@ -35,7 +35,6 @@
 
 #include "jsk_perception/apply_mask_image.h"
 #include <sensor_msgs/image_encodings.h>
-#include <opencv2/opencv.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include "jsk_perception/image_utils.h"
 
@@ -45,11 +44,16 @@ namespace jsk_perception
   {
     DiagnosticNodelet::onInit();
     pnh_->param("approximate_sync", approximate_sync_, false);
+    pnh_->param("clip_region", clip_region_, false);
     pnh_->param("mask_black_to_transparent", mask_black_to_transparent_, false);
+
+    pnh_->param("use_prev_image", use_prev_image_, false);
+
     pub_image_ = advertise<sensor_msgs::Image>(
       *pnh_, "output", 1);
     pub_mask_ = advertise<sensor_msgs::Image>(
       *pnh_, "output/mask", 1);
+
   }
 
   void ApplyMaskImage::subscribe()
@@ -98,17 +102,24 @@ namespace jsk_perception
       JSK_NODELET_ERROR("mask: %dx%dx", mask.cols, mask.rows);
       return;
     }
-    
-    cv::Rect region = boundingRectOfMaskImage(mask);
-    cv::Mat clipped_mask = mask(region);
-    pub_mask_.publish(cv_bridge::CvImage(
-                        mask_msg->header,
-                        "mono8",
-                        clipped_mask).toImageMsg());
 
-    cv::Mat clipped_image = image(region);
+    cv::Mat clipped_mask;
     cv::Mat masked_image;
-    clipped_image.copyTo(masked_image, clipped_mask);
+    if(clip_region_){
+      cv::Rect region = boundingRectOfMaskImage(mask);
+      clipped_mask = mask(region);
+      pub_mask_.publish(cv_bridge::CvImage(
+                                           mask_msg->header,
+                                           "mono8",
+                                           clipped_mask).toImageMsg());
+      cv::Mat clipped_image;
+      clipped_image = image(region);
+      clipped_image.copyTo(masked_image, clipped_mask);
+    }
+    else{
+      clipped_mask = mask;
+      image.copyTo(masked_image, clipped_mask);
+    }
 
     cv::Mat output_image;
     if (mask_black_to_transparent_) {
@@ -127,6 +138,10 @@ namespace jsk_perception
             cv::Vec4b color = output_image.at<cv::Vec4b>(j, i);
             color[3] = 0;  // mask black -> transparent
             output_image.at<cv::Vec4b>(j, i) = color;
+          }else if(use_prev_image_){
+            cv::Vec4b color = prev_image_.at<cv::Vec4b>(j, i);
+            color[3] = 0;  // mask black -> transparent
+            output_image.at<cv::Vec4b>(j, i) = color;
           }
         }
       }
@@ -137,20 +152,56 @@ namespace jsk_perception
             output_image).toImageMsg());
     }
     else {
+      cv::Mat revert_masked_image;
+      ROS_ERROR("Revert Mask Image");
+      if(use_prev_image_){
+        ROS_ERROR("Use Prev Image");
+        bitwise_not(mask, revert_masked_image);
+      }
+
       if (isBGRA(image_msg->encoding)) {
+        if(use_prev_image_){
+          if(prev_image_.rows > 0){
+          ROS_ERROR("BGRA");
+          cv::Mat revert_prev_image;
+          prev_image_.copyTo(revert_prev_image, revert_masked_image);
+          masked_image += revert_prev_image;
+          }
+        }
         cv::cvtColor(masked_image, output_image, cv::COLOR_BGR2BGRA);
       }
       else if (isRGBA(image_msg->encoding)) {
+        if(use_prev_image_){
+          if(prev_image_.rows > 0){
+          ROS_ERROR("RGBA");
+          cv::Mat revert_prev_image;
+          prev_image_.copyTo(revert_prev_image, revert_masked_image);
+          masked_image += revert_prev_image;
+          }
+        }
         cv::cvtColor(masked_image, output_image, cv::COLOR_BGR2RGBA);
       }
       else {  // BGR, RGB or GRAY
+        if(use_prev_image_){
+          if(prev_image_.rows > 0){
+          ROS_ERROR("OTHER");
+
+          cv::Mat revert_prev_image;
+          prev_image_.copyTo(revert_prev_image, revert_masked_image);
+          masked_image += revert_prev_image;
+          }
+        }
         masked_image.copyTo(output_image);
       }
+
+
       pub_image_.publish(cv_bridge::CvImage(
             image_msg->header,
             image_msg->encoding,
             output_image).toImageMsg());
     }
+
+    prev_image_ = masked_image;
   }
 }
 
