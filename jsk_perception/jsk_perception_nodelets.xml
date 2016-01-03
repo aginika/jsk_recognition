@@ -231,4 +231,11 @@
       Subtract each other and publish
     </description>
   </class>
+  <class name="jsk_perception/Substraction2"
+         type="jsk_perception::Substraction2"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Subtract each other and publish
+    </description>
+  </class>
 </library>
