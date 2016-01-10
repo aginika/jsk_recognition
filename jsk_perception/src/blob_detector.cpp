@@ -79,11 +79,28 @@ namespace jsk_perception
     cv::Mat label(image.size(), CV_16SC1);
 
     image.convertTo(image, CV_8UC1);
+    cv::Mat dst(image.rows, image.cols,CV_8UC1,cv::Scalar::all(0));
     cv::threshold(image, image, 1, 255, CV_THRESH_BINARY);
+    std::vector<std::vector<cv::Point> > contours;
+    std::vector<cv::Vec4i> hierarchy;
+    cv::findContours(image, contours,  hierarchy,CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+
+    int largest_area=0;
+    int largest_contour_index=0;
+    for( int i = 0; i< contours.size(); i++ ) 
+      {
+        double a=contourArea( contours[i],false);
+        if(a>largest_area){
+          largest_area=a;
+          largest_contour_index=i;
+        }
+      }
+    cv::Scalar color( 255,255,255);
+    cv::drawContours( dst, contours,largest_contour_index, color, CV_FILLED, 8, hierarchy );
+
     LabelingBS labeling;
-    labeling.Exec(image.data, (short*)label.data, image.cols, image.rows,
+    labeling.Exec(dst.data, (short*)label.data, image.cols, image.rows,
                   true, min_area_);
-    
     cv::Mat label_int(image.size(), CV_32SC1);
     for (int j = 0; j < label.rows; j++) {
       for (int i = 0; i < label.cols; i++) {
@@ -94,6 +111,8 @@ namespace jsk_perception
     pub_.publish(
       cv_bridge::CvImage(image_msg->header,
                          sensor_msgs::image_encodings::TYPE_32SC1,
+                         // sensor_msgs::image_encodings::TYPE_8UC1,
+                         // label_int).toImageMsg());
                          label_int).toImageMsg());
   }
 
