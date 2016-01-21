@@ -165,6 +165,7 @@ jsk_pcl_nodelet(src/voxel_grid_downsample_decoder_nodelet.cpp "jsk_pcl/VoxelGrid
 # # jsk_pcl_nodelet(src/pointcloud_throttle_nodelet.cpp "jsk_pcl/NodeletPointCloudThrottle" "point_cloud_throttle")
 jsk_pcl_nodelet(src/nearest_neighbor_points_nodelet.cpp "jsk_pcl/NearestNeighborPoints" "nearest_neighbor_points")
 jsk_pcl_nodelet(src/centroid_publisher_nodelet.cpp "jsk_pcl/CentroidPublisher" "centroid_publisher")
+jsk_pcl_nodelet(src/extract_field_of_view_nodelet.cpp "jsk_pcl/ExtractFieldOfView" "extract_field_of_view")
 jsk_pcl_nodelet(src/pointcloud_to_marker_nodelet.cpp "jsk_pcl/PointCloudToMarker" "pointcloud_to_marker")
 jsk_pcl_nodelet(src/point_absorption_nodelet.cpp "jsk_pcl/PointAbsorption" "point_absorption")
 # jsk_pcl_nodelet(src/moving_least_square_smoothing_nodelet.cpp "jsk_pcl/MovingLeastSquareSmoothing" "moving_least_square_smoothing")

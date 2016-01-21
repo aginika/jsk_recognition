@@ -199,9 +199,6 @@ namespace jsk_perception
         cv::medianBlur(image, image, 5);
       }
 
-    // std::vector<cv::Mat> dst_img;
-    // cv::buildPyramid(src_img, dst_img, 2);
-
     cv::Mat image_mask, tmp_im, tmp_pr;
     cv::Mat prev_image_mask;
     image.convertTo(tmp_im, CV_8UC1);
@@ -211,7 +208,6 @@ namespace jsk_perception
 
     if (mode_ == 0){
       cv::subtract(image, prev_ptr->image, sr_fg);
-      //cv::fastNlMeansDenoising(sr_fg, sr_fg);
       cv::Mat const structure_elem = cv::getStructuringElement(
                                                                cv::MORPH_RECT, cv::Size(open_length_, open_length_));
       cv::morphologyEx(sr_fg, sr_fg,
@@ -219,7 +215,6 @@ namespace jsk_perception
       cv::subtract(prev_ptr->image, image, rs_fg);
       cv::morphologyEx(rs_fg, rs_fg,
                        cv::MORPH_OPEN, structure_elem, cv::Point(-1, -1), open_times_);
-      //cv::fastNlMeansDenoising(rs_fg, rs_fg);
       both_fg = sr_fg + rs_fg;
     }else{
 #if CV_MAJOR_VERSION >= 3
@@ -247,9 +242,9 @@ namespace jsk_perception
         if(mask_pub_){
           sensor_msgs::Image::Ptr sr_mask_image
             = cv_bridge::CvImage(image_msg->header,
-                                 // sensor_msgs::image_encodings::TYPE_16UC1,
-                                 sensor_msgs::image_encodings::MONO8,
-                                 image_mask).toImageMsg();
+                                 sensor_msgs::image_encodings::TYPE_16UC1,
+                                 // sensor_msgs::image_encodings::MONO8,
+                                 image).toImageMsg();
           sr_mask_pub_.publish(sr_mask_image);
 
           sensor_msgs::Image::Ptr rs_mask_image
@@ -285,14 +280,17 @@ namespace jsk_perception
                            tmp_rs).toImageMsg();
     rs_pub_.publish(rs_diff_image);
 
-    cv::Mat tmp_bo, tmp_bo2;
+    cv::Mat tmp_bo, tmp_bo2, tmp_bo3, tmp_bo4;
     // both_fg.copyTo(tmp_bo, image_mask);
     // tmp_bo.copyTo(tmp_bo2, prev_image_mask);
     tmp_bo2 = tmp_sr + tmp_rs;
+    tmp_bo2.convertTo(tmp_bo3, CV_8UC1);
+    cv::threshold(tmp_bo3, tmp_bo4, 0, 255, CV_THRESH_BINARY);
     sensor_msgs::Image::Ptr both_diff_image
       = cv_bridge::CvImage(image_msg->header,
-                           sensor_msgs::image_encodings::TYPE_16UC1,
-                           tmp_bo2).toImageMsg();
+                           sensor_msgs::image_encodings::MONO8,
+                           // sensor_msgs::image_encodings::TYPE_16UC1,
+                           tmp_bo4).toImageMsg();
     both_pub_.publish(both_diff_image);
 
     prev_ptr = cv_ptr;

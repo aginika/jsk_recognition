@@ -480,7 +480,12 @@
       publish the centroid of the pointcloud to /tf
     </description>
   </class>
-
+  <class name="jsk_pcl/ExtractFieldOfView" type="jsk_pcl_ros::ExtractFieldOfView"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      extract field of view
+    </description>
+  </class>
   <class name="jsk_pcl/PointCloudToMarker" type="jsk_pcl_ros::PointCloudToMarker"
          base_class_type="nodelet::Nodelet">
     <description>

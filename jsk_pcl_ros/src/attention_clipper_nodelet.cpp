@@ -374,10 +374,7 @@ namespace jsk_pcl_ros
   void AttentionClipper::clipPointcloud(
     const sensor_msgs::PointCloud2::ConstPtr& msg)
   {
-    ROS_ERROR("clipPointcloud");
     boost::mutex::scoped_lock lock(mutex_);
-    ROS_ERROR("clipPointcloud2");
-    NODELET_ERROR("HERE");
     vital_checker_->poke();
     try {
       // 1. transform pointcloud
@@ -406,7 +403,6 @@ namespace jsk_pcl_ros
           cloud(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::fromROSMsg(*msg, *cloud);
         pcl::CropBox<pcl::PointXYZ> crop_box(false);
-        NODELET_ERROR("HERE2");
         pcl::PointIndices::Ptr indices (new pcl::PointIndices);
         JSK_NODELET_DEBUG("max_points: [%f, %f, %f]", dimensions_[i][0]/2,
                       dimensions_[i][1]/2,
@@ -435,7 +431,6 @@ namespace jsk_pcl_ros
         crop_box.filter(indices->indices);
         // indices->indices may include NaN and inf points
         // https://github.com/jsk-ros-pkg/jsk_recognition/issues/888
-        NODELET_ERROR("HERE3");
 
         pcl::PointIndices non_nan_indices;
         for (size_t j = 0; j < indices->indices.size(); j++) {
